@@ -39,7 +39,7 @@ From the `todo-list-project` directory run the command
 node_modules/.bin/wp
 ```
 
-It will show a number of errors, but the most important one is  
+It will show a number of warnings but only one error, which is  
 ```
 ERROR in main
   Module not found: Error: Can't resolve './src' ...
@@ -76,11 +76,11 @@ The `HelloSuperhero.js` file exports a function that returns a `<div>` element g
 
 The `index.js` file imports that function and adds the HelloSuperhero component to the document body.
 
-Wait... Is this a *Functional Component* - Not as hard as it sounds is it?
+Wait... Is this a *Functional Component*? Not as hard as it sounds is it.
 
 Run webpack again (go ahead and look above if you cannot remember how).  This time you will see a warning, but no errors.  And you should now see a new file `./dist/main.js`... have a look.
 
-Stop and look at the contents of `./dist/main.js` now.  What did webpack do?
+Seriously. Stop and look at the contents of `./dist/main.js` **now**.  What did webpack do?
 
 ### Fix those webpack warnings.
 
@@ -111,7 +111,7 @@ Try running webpack again, but this time specify `development` mode.  How is `./
 
 ### What about that `index.html` file
 
-Lets add a plugin to generate an `index.html` file.  We will use the lightweight [`mini-html-webpack-plugin`](https://www.npmjs.com/package/mini-html-webpack-plugin), but there is also a [full-featured plugin](https://webpack.js.org/plugins/html-webpack-plugin/) for projects that require the additional features. 
+Let's add a plugin to generate an `index.html` file.  We will use the lightweight [`mini-html-webpack-plugin`](https://www.npmjs.com/package/mini-html-webpack-plugin), but there is also a [full-featured plugin](https://webpack.js.org/plugins/html-webpack-plugin/) for projects that require the additional features. 
 
 Install the plugin as follows:
 ```
@@ -150,8 +150,7 @@ To wrap up this chapter, add the following to the `scripts` section of `package.
 ```
     "build": "wp --mode production",
 ```
-this instructs node on the command to run to build the application.  Now `npm run build` will build the distribution of the application.
-
+This tells **node** which command to run to build the application.  Now `npm run build` will build the distribution of the application.
 
 ## Summary
 
