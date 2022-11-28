@@ -133,13 +133,13 @@ module.exports = {
   ],
 };
   ```
-Notice that the plugin is first required, and then exported in the `plugins` property of the exported object.
+Notice that the plugin is first required, and then exported in the `plugins` property of the returned object.
 
 Run webpack again.  Notice the `./dist` directory now includes an `index.html` file.  Pretty slick ;-)
 
 Run a local webserver
 ```
-npx server dist
+npx serve dist
 ```
 and you :fingers_crossed: will see a webpage that greets your superhero of choice.
 
