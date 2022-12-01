@@ -1,12 +1,12 @@
 # Chapter 2: Components and the Virtual DOM
 
-Modern front-end frameworks are powerful because they manage the rendering of the application in the browser as data become.  All frameworks achieve this by adding a layer of abstraction between the application and the document object model (DOM).  This layer of abstraction is typically called the Virtual DOM.  
+Modern front-end frameworks are powerful because they manage the rendering of the application in the browser based on user interaction.  All frameworks achieve this by adding a layer of abstraction between the application and the document object model (DOM).  This layer of abstraction is typically called the Virtual DOM.  
 
 In this chapter we will build a very simple Virtual DOM, and use it to render components.  
 
 To illustrate the Virtual DOM, this chapter will guide you through the creation of a to-do list application.  The application has the following user stories:
 
-1. As a user, I want to add an item to my todo list.
+1. <a name="user-story-1"></a>As a user, I want to add an item to my todo list.
     * Type up to 50 characters in a single line text input.
     * Pressing the "Enter" key adds the item to the bottom of the list
     * After adding the item, the text input clears
@@ -21,6 +21,11 @@ To illustrate the Virtual DOM, this chapter will guide you through the creation 
 
 ## Pre-reading
 
+* [Using `fetch()`](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API/Using_Fetch)
+* [`<input type="text">` Documentation](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/text)
+* [`keyup` events](https://developer.mozilla.org/en-US/docs/Web/API/Element/keyup_event)
+* [Destructuring Assignment](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Destructuring_assignment)
+
 ## Instructions
 
 ### Setup
@@ -29,7 +34,181 @@ Checkout the `chapter-2` branch of this repository.
 git checkout chapter-2
 ```
 
-This 
+This command will replace the contents of `todo-list-project` with a completed and working `webpack.config.js` and `package.json` file.  
+
+### Create a TodoListItem Component
+
+Begin this chapter by creating a new file `src/TodoListItem.js`. This file will export a functional component that returns an HTMLElement representing a single item in our future todo list.  
+
+```
+/**
+ * Returns an HTMLElement representing a todo list item.
+ * Props must contain two properties:
+ * @param props.completed A boolean representing if the item is completed or not
+ * @param props.text A string for the todo item text to display
+ */
+export function TodoListItem(props) {
+    const div = document.createElement('div');
+    div.innerHTML = `
+        ${props.complete} ${props.text}
+    `;
+    return div;
+}
+```
+
+There is not much to this component right now. It just adds the completed status and the text to a `<div>` element and returns that.  Notice that the completed status and the text are passed to the function as an object named `props`.  
+
+Go ahead and add a few `TodoListItem` components to the page. 
+
+```
+document.body.appendChild(TodoListItem({complete: true, text: "This is complete"}));
+document.body.appendChild(TodoListItem({complete: false, text: "This is not complete"}));
+```
+
+Start the development server and view the page.  As you can see below, it is not very interesting.
+
+![screenshot-1](images/page-screenshot-1.png)
+
+In all likelihood you work with a *very demanding* graphic designer who has a very specific preference for what the checkmarks look like.  They have provided you with two `.png` files that you must use to represent the checked or unchecked status of the todo list items.  Thoses files are in `src/assets`.  They look like this.
+
+![checked.png](./images/checked.png)
+![unchecked.png](./images/unchecked.png)
+
+In order to include these images, we need to tell `webpack` that we want it to package images in the distribution.  This is as simple as including a `module` with a `rule` in `webpack.config.js`
+that instructs webpack to load `.png` files as an asset.  Add the following declaration to `webpack.config.js` below the `plugins` section.  
+```
+    module: {
+      rules: [
+        {
+          test: /\.png$/,
+          type: 'asset/resource'
+        }
+      ]
+    }
+```
+
+Now we can import and use `.png` images as variables directly in our javascript.  Modify `TodoListItem.js` to look like this.
+
+```
+import checked from './assets/checked.png';
+import unchecked from './assets/unchecked.png';
+
+ // Documentation is here 
+ 
+export function TodoListItem(props) {
+    const div = document.createElement('div');
+    const image = `<img src="${props.complete ? checked : unchecked}" width="20" height="20"/>`;
+    div.innerHTML = `
+        ${image} ${props.text}
+    `;
+    return div;
+}
+```
+
+The first two lines import the images into the variables `checked` and `unchecked`.  In the body of the function an `<img>` HTML tag is created whose `src` property is either `checked` or `unchecked` based on the `props.complete` status.  Finally the `<img>` tag is included in the `<div>` element.  
+
+Reload the application in your web browser.  It should look like this:
+
+![screenshot-2](./images/page-screenshot-2.png)
+
+### Add a TodoList Component
+
+At this point two `TodoListItem` components are manually added to the document body.  What we need is a proper list of todo items and a component that renders each item in that list.
+
+Create a new file `src/TodoList.js` that exports a functional component named `TodoList`.  This functional component will take an array of todo items as its argument, and iterate over them, adding a `TodoListItem` for each item in the list. 
+
+```
+import { TodoListItem } from "./TodoListItem";
+
+export function TodoList({todo_items}) {
+    const div = document.createElement('div');
+    for(let i = 0 ; i < todo_items.length; i++) {
+        const item = todo_items[i];
+        div.appendChild(TodoListItem({item}));
+    }
+    return div;
+}
+```
+
+Notice the use of [destructuting assignment](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Destructuring_assignment) to communicate the expectation of receiving an object with a `todo_items` property as the argument to the component.
+
+Now import `TodoList` into `index.js`.  Remove the lines where you append `TodoListItem` components directly to the document body and instead create an Array of those items named `todo_items` and append a `TodoList` component to the document body, passing `todo_items` as its argument.
+
+```
+const todo_items = [
+    {complete: true, text: "This is complete"},
+    {complete: false, text: "This is not complete"}
+];
+
+document.body.appendChild(TodoList({todo_items}));
+```
+
+Wonderful! At this point your application should look something like the screenshot below.
+
+![screenshot-3](images/page-screenshot-3.png)
+
+### Adding New Todo Items
+
+Have a look back at the [first user story](#user-story-1).  We need a component that will be responsible for adding todo items.  
+
+Create a new file `src/TodoListItemCreator.js` that returns a `<div><input type="text" maxlength="50" size="50" placeholder="What do you need to do?"></div>` and add it to the document body above the `TodoList`.  Does your application look like this?
+
+![screenshot-4](images/page-screenshot-4.png)
+
+Great! 
+
+Now we have an input element, but there is no mechanism to
+actually add new items to the todo list.  There is where things
+start to get tricky.
+
+Create a new function in `index.js` called `addItem`.  This 
+function will push an item onto the end of the `todo_items` 
+Array.
+
+```
+const addItem = (item) => {
+    todo_items.push(item);
+}
+```
+
+Pass this function to `TodoListItemCreator` as a property in the `props` object.  **Passing Functions as props is very useful**.
+
+```
+ToDoListItemCreator({addItem})
+```
+
+Edit `TodoListItemCreator` to accept the `addItem` function.
+Add an event listener to the input component that listens for
+`keyup` events, creates a new todo item and passes it to
+the `addItem` function. The `TodoListItemCreator` will now look
+ like:
+
+```
+export function ToDoListItemCreator({addItem}) {
+    const div = document.createElement('div');
+    
+    const input = document.createElement('input');
+    input.setAttribute('type', 'text');
+    input.setAttribute('size', "50");
+    input.setAttribute('placeholder', "What do you need to do?");
+    input.setAttribute('maxlength', 50);
+    input.addEventListener('keyup', ev => {
+        if (ev.code === 'Enter') {
+            // Add the new Item 
+            addItem({
+                complete: false,
+                text: ev.target.value
+            });
+            // Blank the input after 'Enter'
+            ev.target.value = ""; 
+        }
+    });
+    div.appendChild(input);
+
+    return div;
+}
+```
+
 ### Create the Virtual DOM Class 
 
 ```

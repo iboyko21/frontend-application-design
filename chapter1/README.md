@@ -143,19 +143,76 @@ npx serve dist
 ```
 and you :fingers_crossed: will see a webpage that greets your superhero of choice.
 
+To stop the server type `ctrl-c`. 
+
 ### Add a build shortcut
 
-To wrap up this chapter, add the following to the `scripts` section of `package.json`.
+It is convenient to run the build from `npm`.  To 
+do this add the following to the `scripts` section of `package.json`.
 
 ```
     "build": "wp --mode production",
 ```
-This tells **node** which command to run to build the application.  Now `npm run build` will build the distribution of the application.
+This tells **node** which command to run to build the application.  Now `npm run build` will build the distribution of the application.  Go ahead and try it now.
+
+### How to avoid building every time?  The development server.
+
+Build your application and run the webserver.  Now change the name of the superhero you are greeting in `index.js`.  Reload your browser and you will notice that the old superhero name is still showing.  In order to see the changes you just made, you need to shutdown the webserver, rebuild the application, and restart the webserver.  That's a pain.
+
+Eliminate this workflow by installing the development server.  
+
+First add the `webpack-plugin-serve` node module to your todo-list project.
+```
+npm add webpack-plugin-serve -D
+```
+Now update `webpack.config.js` to configure the plugin:
+1) Require the module
+```
+const { WebpackPluginServe } = require("webpack-plugin-serve");
+```
+2) Add the plugin to the `plugins` array. 
+```
+    new WebpackPluginServe({
+      port: parseInt(process.env.PORT, 10) || 8080,
+      static: "./dist",
+      liveReload: true,
+      waitForBuild: true,
+    }),
+```
+
+3) Add an `entry` point so webpack knows where to look for source code.
+```
+  entry: ["./src", "webpack-plugin-serve/client"],
+```
+
+4) Instruct webpack to watch for changes in source files when in development mode.
+```
+  watch: mode === "development",
+```
+
+When you are complete, your `webpack.config.js` should look like this:
+
+Finally, add a shortcut to `package.json` so that you can launch the development server with the command `npm run start`.  Add the following to the `scripts` array in `package.json`
+```
+"start": "wp --mode development"
+```
+
+Launch the development server, then edit the superhero name in `index.js` and reload your browser window.  Ta Da!
+
+### Commit your work
+
+Commit your work before moving on.  This way you can return to this point and compare your work with the solutions as you progress.
+
+```
+# Assuming you are still in the todo-list-project directory
+git add .
+git commit -m "Finished Chapter 1"
+```
 
 ## Summary
 
 In this chapter we initialized a node application and configured
-a bare-bones webpack application from scratch. 
+a bare-bones webpack application from scratch. We then configured the webpack development server so that changes to our source code will be immediately rebuilt.  
 
 ## References
 This tutorial was heavily influenced by the excellent work at https://survivejs.com.  I *strongly* recommend this resource.
