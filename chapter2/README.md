@@ -130,7 +130,7 @@ export function TodoList({todo_items}) {
 }
 ```
 
-Notice the use of [destructuting assignment](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Destructuring_assignment) to communicate the expectation of receiving an object with a `todo_items` property as the argument to the component.
+Notice the use of [destructuting assignment](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Destructuring_assignment) to communicate the expectation of receiving an object with a `todo_items` property as the argument to the component.  We could have just declared `props` as the argument to the function, and then used `props.todo_items`, but it is a best practice to be explicit about the properties the function expects. This eliminates guesswork and reduces potential bugs. 
 
 Now import `TodoList` into `index.js`.  Remove the lines where you append `TodoListItem` components directly to the document body and instead create an Array of those items named `todo_items` and append a `TodoList` component to the document body, passing `todo_items` as its argument.
 
@@ -166,7 +166,8 @@ function will push an item onto the end of the `todo_items`
 Array.
 
 ```
-const addItem = (item) => {
+const addItem = (text) => {
+    const item = {complete: false, text}
     todo_items.push(item);
 }
 ```
@@ -179,65 +180,173 @@ ToDoListItemCreator({addItem})
 
 Edit `TodoListItemCreator` to accept the `addItem` function.
 Add an event listener to the input component that listens for
-`keyup` events, creates a new todo item and passes it to
-the `addItem` function. The `TodoListItemCreator` will now look
+`keyup` events, and then calls the `addItem` function when the `Enter` key is pressed. 
+ Also add a line of code to clear the input value after adding the todo item.  The `TodoListItemCreator` will now look
  like:
 
 ```
 export function ToDoListItemCreator({addItem}) {
-    const div = document.createElement('div');
     
+    // Create the Input Element
     const input = document.createElement('input');
+
+    // Set the Input Element attributes
     input.setAttribute('type', 'text');
     input.setAttribute('size', "50");
     input.setAttribute('placeholder', "What do you need to do?");
     input.setAttribute('maxlength', 50);
+
+    // Add an event listener for 'keyup' events
     input.addEventListener('keyup', ev => {
         if (ev.code === 'Enter') {
             // Add the new Item 
-            addItem({
-                complete: false,
-                text: ev.target.value
-            });
+            addItem(ev.target.value);
             // Blank the input after 'Enter'
             ev.target.value = ""; 
         }
     });
-    div.appendChild(input);
+
+    return input;
+}
+```
+
+Test the application in the browser.  When you type something
+in the input field and press enter, you will notice that 
+the input field is cleared, but no list item appears.  You can even 
+try logging to the console to confirm that
+the event is handled by your function. 
+
+The reason your new todo items do not appear, is because the document object model (DOM) needs to be updated.  Just adding 
+data to an Array does not modify the DOM.  
+
+Frameworks like React, mithril, and Angular work by introducing a Virtual DOM.  When your application manipulates components in this
+Virtual DOM, the framework will detect the changes and use a sophisticated algorithm to efficiently update the actual DOM in the browser.
+
+While we cannot recreate something as sophisticated as React in 
+this tutorial, we can create a very simple Virtual DOM to illustrate the process that a framework like React uses. 
+
+### Create the Virtual DOM 
+
+Our Virtual DOM will be a class with two very simple methods: `mount()` and `refresh()`.  
+
+Create a new file `src/VirtualDom.js` that exports a class named `VirtualDom`.
+
+```
+export class VirtualDom {
+
+    /** 
+     * Mount a component at the given element.
+     * @param el_id The ID of the element where the Virtual DOM will mount a component
+     * @param component A function that returns an HTMLElement when called 
+     */
+    mount(el_id, component) {
+      // We will add code here
+    }
+  
+    /**
+     * Re-render the component and replace the 
+     * dom below the mountpoint
+     */
+    refresh() {
+      // We will add code here
+    }
+  }
+  ```
+
+The `mount()` method takes two arguments.  The `id` of an HTML element at which to mount a functional component, and the `component` to mount.  Mounting is an **important** concept in front-end architecture.  
+
+A typical front-end application will have server rendered static html, into which dynamic components are mounted.  These dynamic components then fetch content and render themselves.  This process is often referred to as *hydration*.  
+
+If you think of the static html as the freeze dried veggie packet in your fancy ramen noodles,  when you drop them in the boiling water they get *hydrated* and fill out to their final shape.  
+
+The `mount()` method is very simple.  It will just save the two arguments for later use, and call `refresh()`.  Add the following code inside the `mount()` function definition.
+
+```
+this.mountpoint = document.getElementById(el_id);
+this.root = component;
+this.refresh();
+```
+
+The actual magic happens inside the `refresh()` method. 
+Add the following code to the `refresh` function definition.
+```
+if (this.mountpoint) {
+  const new_element = this.root();
+  this.mountpoint.replaceChildren(new_element);
+}
+```
+
+This code checks that `mountpoint` is defined, and if so, 
+it replaces the contents of `mountpoint` with a newly rendered
+HTML element.  Pay careful attention to `this.root()`. `this.root` is actually a function, and `new_element` is the result of calling that function. 
+
+To use our Virtual DOM we need to import and instantiate it, define a mount point, and define the root functional component to mount there.  
+
+Import the `VirtualDom` class into `index.js` and instantiate it. 
+
+```
+import { VirtualDom } from './VirtualDom';
+
+const vdom = new VirtualDom();
+```
+
+Create a new function `TodoApp` that creates a `<div>` element and move the `TodoListItemCreator` and the `TodoList` into this `<div>`. 
+
+```
+function TodoApp() {
+    const div = document.createElement('div');
+    div.appendChild(ToDoListItemCreator({addItem}));
+    div.appendChild(TodoList({todo_items}));
 
     return div;
 }
 ```
 
-### Create the Virtual DOM Class 
+Add a `<div>` element whose id is `root` to the document body, then, at the bottom of `index.js`, mount `TodoApp` at `root`.
 
 ```
-class VirtualDom {
-  constructor() {
-    this.elements = [];
-  }
+document.body.innerHTML = `<div id="root"></div>`;
+vdom.mount('root', TodoApp);
+```
+Notice that we did not mount `TodoApp()`, we mounted `TodoApp`.  The VirtualDOM will call this function every time `refresh()` is invoked and replace the contents of `<div id="root" />` with the result.  
 
-  addElement(el) {
-    this.elements.push(el);
-  }
-  
-  mount(el_id) {
-    this.mountpoint = document.getElementById(el_id);
-    this.refresh();
-  }
+Finally, within the `addItem()` function, invoke `vdom.refresh()`. This way every new item added will trigger the Virtual DOM to refresh the actual DOM. 
 
-  refresh() {
-    if (this.mountpoint) {
-      const root = document.createElement("div");
-      this.elements.forEach((el) => {
-        root.appendChild(el.render());
-      });  
-      this.mountpoint.replaceChildren(root);    
-    }
-  }
+When you are all done your `index.js` should look like this.
+
+```
+import { TodoList } from './TodoList';
+import { ToDoListItemCreator } from './TodoListItemCreator';
+import { VirtualDom } from './VirtualDom';
+
+const vdom = new VirtualDom();
+
+const todo_items = [
+    {complete: true, text: "This is complete"},
+    {complete: false, text: "This is not complete"}
+];
+
+const addItem = (text) => {
+    const item = {complete: false, text}
+    todo_items.push(item);
+    vdom.refresh();
 }
+
+function TodoApp() {
+    const div = document.createElement('div');
+    div.appendChild(ToDoListItemCreator({addItem}));
+    div.appendChild(TodoList({todo_items}));
+
+    return div;
+}
+
+document.body.innerHTML = `<div id="root"></div>`;
+vdom.mount('root', TodoApp);
 ```
 
+Test out your application. You should now be able to add items to the todo list.  
+
+There is a lot here, so take a breather.  
 
 ## Summary
 
