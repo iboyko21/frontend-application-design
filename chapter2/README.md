@@ -10,11 +10,11 @@ To illustrate the Virtual DOM, this chapter will guide you through the creation 
     * Type up to 50 characters in a single line text input.
     * Pressing the "Enter" key adds the item to the bottom of the list
     * After adding the item, the text input clears
-2. As a user, I want to indicate that an item in my list is complete.
+2. <a name="user-story-2"></a>As a user, I want to indicate that an item in my list is complete.
     * Click on a check box adjacent to an incomplete item to mark it completed
     * font color for completed items turns light grey
     * checkbox toggles to checked
-3. As a user I want to incdicate that an item in my list is incomplete
+3. <a name="user-story-3"></a>As a user I want to incdicate that an item in my list is incomplete
     * Click on a check box adjacent to a completed item to mark it incomplete
     * font color for incomplete item turns black
     * check box toggles to unchecked
@@ -43,14 +43,14 @@ Begin this chapter by creating a new file `src/TodoListItem.js`. This file will 
 ```
 /**
  * Returns an HTMLElement representing a todo list item.
- * Props must contain two properties:
- * @param props.completed A boolean representing if the item is completed or not
- * @param props.text A string for the todo item text to display
+ * <code>item</code> must contain two properties:
+ * @param item.complete A boolean representing if the item is completed or not
+ * @param item.text A string for the todo item text to display
  */
-export function TodoListItem(props) {
+export function TodoListItem(item) {
     const div = document.createElement('div');
     div.innerHTML = `
-        ${props.complete} ${props.text}
+        ${item.complete} ${item.text}
     `;
     return div;
 }
@@ -95,17 +95,21 @@ import unchecked from './assets/unchecked.png';
 
  // Documentation is here 
  
-export function TodoListItem(props) {
+export function TodoListItem(item) {
     const div = document.createElement('div');
-    const image = `<img src="${props.complete ? checked : unchecked}" width="20" height="20"/>`;
+    const image = `<img src="${item.complete ? checked : unchecked}" width="20" height="20"/>`;
     div.innerHTML = `
-        ${image} ${props.text}
+        ${image} ${item.text}
     `;
     return div;
 }
 ```
 
-The first two lines import the images into the variables `checked` and `unchecked`.  In the body of the function an `<img>` HTML tag is created whose `src` property is either `checked` or `unchecked` based on the `props.complete` status.  Finally the `<img>` tag is included in the `<div>` element.  
+The first two lines import the images into the variables `checked` 
+and `unchecked`.  In the body of the function an `<img>` HTML tag 
+is created whose `src` property is either `checked` or `unchecked` 
+based on the `props.complete` status.  Finally the `<img>` tag is 
+included in the `<div>` element.  
 
 Reload the application in your web browser.  It should look like this:
 
@@ -113,9 +117,14 @@ Reload the application in your web browser.  It should look like this:
 
 ### Add a TodoList Component
 
-At this point two `TodoListItem` components are manually added to the document body.  What we need is a proper list of todo items and a component that renders each item in that list.
+At this point two `TodoListItem` components are manually added to 
+the document body.  What we need is a proper list of todo items and
+a component that renders each item in that list.
 
-Create a new file `src/TodoList.js` that exports a functional component named `TodoList`.  This functional component will take an array of todo items as its argument, and iterate over them, adding a `TodoListItem` for each item in the list. 
+Create a new file `src/TodoList.js` that exports a functional component 
+named `TodoList`.  This functional component will take an array of todo 
+items as its argument, and iterate over them, adding a `TodoListItem` 
+for each item in the list. 
 
 ```
 import { TodoListItem } from "./TodoListItem";
@@ -124,7 +133,7 @@ export function TodoList({todo_items}) {
     const div = document.createElement('div');
     for(let i = 0 ; i < todo_items.length; i++) {
         const item = todo_items[i];
-        div.appendChild(TodoListItem({item}));
+        div.appendChild(TodoListItem(item));
     }
     return div;
 }
@@ -178,7 +187,7 @@ Pass this function to `TodoListItemCreator` as a property in the `props` object.
 ToDoListItemCreator({addItem})
 ```
 
-Edit `TodoListItemCreator` to accept the `addItem` function.
+Edit `TodoListItemCreator` to accept the `addItem` function as an argument.
 Add an event listener to the input component that listens for
 `keyup` events, and then calls the `addItem` function when the `Enter` key is pressed. 
  Also add a line of code to clear the input value after adding the todo item.  The `TodoListItemCreator` will now look
@@ -214,12 +223,12 @@ Test the application in the browser.  When you type something
 in the input field and press enter, you will notice that 
 the input field is cleared, but no list item appears.  You can even 
 try logging to the console to confirm that
-the event is handled by your function. 
+the event is handled by your function, but the browser still doesn't update.  What is going on?? 
 
 The reason your new todo items do not appear, is because the document object model (DOM) needs to be updated.  Just adding 
 data to an Array does not modify the DOM.  
 
-Frameworks like React, mithril, and Angular work by introducing a Virtual DOM.  When your application manipulates components in this
+Frameworks like React, Mithril, and Angular work by introducing a Virtual DOM.  When your application manipulates components in this
 Virtual DOM, the framework will detect the changes and use a sophisticated algorithm to efficiently update the actual DOM in the browser.
 
 While we cannot recreate something as sophisticated as React in 
@@ -278,7 +287,7 @@ if (this.mountpoint) {
 
 This code checks that `mountpoint` is defined, and if so, 
 it replaces the contents of `mountpoint` with a newly rendered
-HTML element.  Pay careful attention to `this.root()`. `this.root` is actually a function, and `new_element` is the result of calling that function. 
+HTML element.  Pay careful attention to `this.root()`. `this.root` is actually a <u>function</u>, and `new_element` is the result of calling that function. 
 
 To use our Virtual DOM we need to import and instantiate it, define a mount point, and define the root functional component to mount there.  
 
@@ -348,6 +357,169 @@ Test out your application. You should now be able to add items to the todo list.
 
 There is a lot here, so take a breather.  
 
+### Marking Items as Complete
+
+[User story 2](#user-story-2) and [user story 3](#user-story-3) require the application to mark todo items as complete or incomplete when the user clicks on the item.  
+
+The same strategy used for adding an item can be used here.
+However, instead of adding a new item to the end of 
+the `todo_items` array, the `updateItem` method will 
+replace the item at position `i`.  Add the following 
+function to `index.js`
+
+```
+const updateItem = (i, item) => {
+    todo_items[i] = item;
+    vdom.refresh();
+}
+```
+
+Pass the `updateItem` function as a prop to `TodoList`, 
+and update the argument of `TodoList` to accept the function. 
+
+The `updateItem` function takes an index as an argument, and 
+inside `TodoList` there is a loop over `todo_items`.  
+This is a nice opportunity to create a unique function
+for each item in the list that is responsible for updating
+that todo item and only that todo item.  Because the function
+will be specific to a unique `todo_item` it can be assigned as
+a property on that todo item.  Update the `for` loop 
+inside `TodoList` as follows: 
+
+```
+for(let i = 0 ; i < todo_items.length; i++) {
+    const item = todo_items[i];
+    item.toggleComplete = () => {
+        item.complete = !item.complete;
+        updateItem(i, item);
+    }
+    div.add(TodoListItem({item}));
+}
+```
+
+Here a new property `toggleComplete` is defined on a `todo_item`. 
+The property is a function that will toggle the `complete` property
+of the item, and then call `updateItem` to modify that item. Why is
+the call to `updateItem` necessary?  
+
+Now, inside of `TodoListItem`, register an event handler that will 
+call `item.toggleComplete()` when the user clicks on the element. 
+It will look like this:
+
+```
+export function TodoListItem(item) {
+    const div = document.createElement('div');
+    const image = `<img src="${item.complete ? checked : unchecked}" width="20" height="20"/>`;
+    div.innerHTML = `
+        ${image} ${item.text}
+    `;
+    div.addEventListener('click', (ev) => {
+        item.toggleComplete();
+    });
+    return div;
+}
+```
+
+Test out the application.  It should be possible to check and uncheck each
+todo item.  
+
+### (Optional) - Style The Application
+
+To put a pretty bow on this package, add some styling.  
+
+First add two node packages to the application that will allow webpack
+to load css. 
+
+```
+npm add css-loader style-loader -D
+```
+
+Next configure webpack to load stylesheets when it encounters a `.css` file
+by adding the following rule to the `rules` array of `webpack.config.js`
+
+```
+{ test: /\.css$/, use: ["style-loader", "css-loader"] },
+```
+
+Now create a stylesheet `TodoApp.css`
+
+```
+
+.TodoApp {
+    width: 80%;
+    margin: auto;
+    font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.TodoListItemCreator {
+    padding: 0.5em;
+    margin: 0.5em 0;
+}
+
+.TodoListItemCreator:focus-visible {
+    outline-color: coral;
+}
+
+.TodoList {
+    border-top-style: inset;
+    border-left-style: inset;
+    border-right-style: inset;
+    border-bottom-style: inset;
+}
+
+.TodoListItem {
+    padding: 0.3em;
+    cursor: pointer;
+}
+
+.TodoListItem img {
+    vertical-align: middle;
+    margin-right: 0.5em;
+}
+```
+
+Set the `className` property for the 
+element returned by each component in the application. 
+For example, add `div.className = "TodoList";` to 
+the `TodoList` function.  
+
+Add this import statement to `index.js`:
+```
+import './TodoApp.css';
+```
+
 ## Summary
+
+Congratulations! You completed the chapter.  
+This chapter was quite complex and very dense.  The topics 
+covered included: 
+
+* Creating components
+* Importing image assets and styling
+* Passing data down to components
+* Passing functions down to components
+* Using a Virtual DOM to rebuild the DOM
+
+Don't worry if you got lost along the way.  Now is a good
+time to commit your code so that you can check out the solution.
+
+```
+git add .
+git commit -m "Finished Chapter 2"
+```
+
+Go back and take note of what was confusing, then run 
+`git checkout chapter2-solution` to see what the solution
+looks like.  Try not to move on until you can explain to
+yourself what every line of code does, and why it is important.
+
+Despite our hard work, there is something not quite satisfying about 
+the Virtual DOM implementation introduced in this chapter.  
+A real Virtual DOM will detect changes in components and 
+rerender the application.  The implementation here  
+must be manually refreshed by our event handler.  There are many ways to solve 
+this problem.  The next chapter will introduce a simple 
+implementation of a hook to track changes that require a refresh 
+to the DOM.
 
 ## References
