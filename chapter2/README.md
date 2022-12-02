@@ -30,7 +30,7 @@ To illustrate the Virtual DOM, this chapter will guide you through the creation 
 
 ### Setup
 Checkout the `chapter-2` branch of this repository. 
-```
+```bash
 git checkout chapter-2
 ```
 
@@ -40,7 +40,7 @@ This command will replace the contents of `todo-list-project` with a completed a
 
 Begin this chapter by creating a new file `src/TodoListItem.js`. This file will export a functional component that returns an HTMLElement representing a single item in our future todo list.  
 
-```
+```javascript
 /**
  * Returns an HTMLElement representing a todo list item.
  * <code>item</code> must contain two properties:
@@ -56,11 +56,14 @@ export function TodoListItem(item) {
 }
 ```
 
-There is not much to this component right now. It just adds the completed status and the text to a `<div>` element and returns that.  Notice that the completed status and the text are passed to the function as an object named `props`.  
+There is not much to this component right now. It just adds the completed
+status and the text to a `<div>` element and returns that.  Notice that 
+the completed status and the text are passed to the function as an object 
+named `item`.  
 
 Go ahead and add a few `TodoListItem` components to the page. 
 
-```
+```javascript
 document.body.appendChild(TodoListItem({complete: true, text: "This is complete"}));
 document.body.appendChild(TodoListItem({complete: false, text: "This is not complete"}));
 ```
@@ -76,7 +79,7 @@ In all likelihood you work with a *very demanding* graphic designer who has a ve
 
 In order to include these images, we need to tell `webpack` that we want it to package images in the distribution.  This is as simple as including a `module` with a `rule` in `webpack.config.js`
 that instructs webpack to load `.png` files as an asset.  Add the following declaration to `webpack.config.js` below the `plugins` section.  
-```
+```javascript
     module: {
       rules: [
         {
@@ -89,7 +92,7 @@ that instructs webpack to load `.png` files as an asset.  Add the following decl
 
 Now we can import and use `.png` images as variables directly in our javascript.  Modify `TodoListItem.js` to look like this.
 
-```
+```javascript
 import checked from './assets/checked.png';
 import unchecked from './assets/unchecked.png';
 
@@ -126,10 +129,10 @@ named `TodoList`.  This functional component will take an array of todo
 items as its argument, and iterate over them, adding a `TodoListItem` 
 for each item in the list. 
 
-```
+```javascript
 import { TodoListItem } from "./TodoListItem";
 
-export function TodoList({todo_items}) {
+export function TodoList(todo_items) {
     const div = document.createElement('div');
     for(let i = 0 ; i < todo_items.length; i++) {
         const item = todo_items[i];
@@ -139,17 +142,15 @@ export function TodoList({todo_items}) {
 }
 ```
 
-Notice the use of [destructuting assignment](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Destructuring_assignment) to communicate the expectation of receiving an object with a `todo_items` property as the argument to the component.  We could have just declared `props` as the argument to the function, and then used `props.todo_items`, but it is a best practice to be explicit about the properties the function expects. This eliminates guesswork and reduces potential bugs. 
-
 Now import `TodoList` into `index.js`.  Remove the lines where you append `TodoListItem` components directly to the document body and instead create an Array of those items named `todo_items` and append a `TodoList` component to the document body, passing `todo_items` as its argument.
 
-```
+```javascript
 const todo_items = [
     {complete: true, text: "This is complete"},
     {complete: false, text: "This is not complete"}
 ];
 
-document.body.appendChild(TodoList({todo_items}));
+document.body.appendChild(TodoList(todo_items));
 ```
 
 Wonderful! At this point your application should look something like the screenshot below.
@@ -160,7 +161,7 @@ Wonderful! At this point your application should look something like the screens
 
 Have a look back at the [first user story](#user-story-1).  We need a component that will be responsible for adding todo items.  
 
-Create a new file `src/TodoListItemCreator.js` that returns a `<div><input type="text" maxlength="50" size="50" placeholder="What do you need to do?"></div>` and add it to the document body above the `TodoList`.  Does your application look like this?
+Create a new file `src/TodoListItemCreator.js` that returns a n input element such as `<input type="text" maxlength="50" size="50" placeholder="What do you need to do?">` and add it to the document body above the `TodoList`.  Does your application look like this?
 
 ![screenshot-4](images/page-screenshot-4.png)
 
@@ -174,18 +175,14 @@ Create a new function in `index.js` called `addItem`.  This
 function will push an item onto the end of the `todo_items` 
 Array.
 
-```
+```javascript
 const addItem = (text) => {
     const item = {complete: false, text}
     todo_items.push(item);
 }
 ```
 
-Pass this function to `TodoListItemCreator` as a property in the `props` object.  **Passing Functions as props is very useful**.
-
-```
-ToDoListItemCreator({addItem})
-```
+Pass this as an argument to the function `TodoListItemCreator`.  **Passing Functions down to components is very useful**.
 
 Edit `TodoListItemCreator` to accept the `addItem` function as an argument.
 Add an event listener to the input component that listens for
@@ -193,8 +190,8 @@ Add an event listener to the input component that listens for
  Also add a line of code to clear the input value after adding the todo item.  The `TodoListItemCreator` will now look
  like:
 
-```
-export function ToDoListItemCreator({addItem}) {
+```javascript
+export function ToDoListItemCreator(addItem) {
     
     // Create the Input Element
     const input = document.createElement('input');
@@ -240,7 +237,7 @@ Our Virtual DOM will be a class with two very simple methods: `mount()` and `ref
 
 Create a new file `src/VirtualDom.js` that exports a class named `VirtualDom`.
 
-```
+```javascript
 export class VirtualDom {
 
     /** 
@@ -260,7 +257,7 @@ export class VirtualDom {
       // We will add code here
     }
   }
-  ```
+```
 
 The `mount()` method takes two arguments.  The `id` of an HTML element at which to mount a functional component, and the `component` to mount.  Mounting is an **important** concept in front-end architecture.  
 
@@ -270,7 +267,7 @@ If you think of the static html as the freeze dried veggie packet in your fancy 
 
 The `mount()` method is very simple.  It will just save the two arguments for later use, and call `refresh()`.  Add the following code inside the `mount()` function definition.
 
-```
+```javascript
 this.mountpoint = document.getElementById(el_id);
 this.root = component;
 this.refresh();
@@ -278,7 +275,7 @@ this.refresh();
 
 The actual magic happens inside the `refresh()` method. 
 Add the following code to the `refresh` function definition.
-```
+```javascript
 if (this.mountpoint) {
   const new_element = this.root();
   this.mountpoint.replaceChildren(new_element);
@@ -287,13 +284,16 @@ if (this.mountpoint) {
 
 This code checks that `mountpoint` is defined, and if so, 
 it replaces the contents of `mountpoint` with a newly rendered
-HTML element.  Pay careful attention to `this.root()`. `this.root` is actually a <u>function</u>, and `new_element` is the result of calling that function. 
+HTML element.  Pay careful attention to `this.root()`. The 
+parenthesis matter because`this.root` is actually a <u>function</u>, and 
+calling that function creates a brand new HTMLElement that is 
+then assigned to the `new_element` variable. 
 
 To use our Virtual DOM we need to import and instantiate it, define a mount point, and define the root functional component to mount there.  
 
 Import the `VirtualDom` class into `index.js` and instantiate it. 
 
-```
+```javascript
 import { VirtualDom } from './VirtualDom';
 
 const vdom = new VirtualDom();
@@ -301,11 +301,11 @@ const vdom = new VirtualDom();
 
 Create a new function `TodoApp` that creates a `<div>` element and move the `TodoListItemCreator` and the `TodoList` into this `<div>`. 
 
-```
+```javascript
 function TodoApp() {
     const div = document.createElement('div');
-    div.appendChild(ToDoListItemCreator({addItem}));
-    div.appendChild(TodoList({todo_items}));
+    div.appendChild(ToDoListItemCreator(addItem));
+    div.appendChild(TodoList(todo_items));
 
     return div;
 }
@@ -313,7 +313,7 @@ function TodoApp() {
 
 Add a `<div>` element whose id is `root` to the document body, then, at the bottom of `index.js`, mount `TodoApp` at `root`.
 
-```
+```javascript
 document.body.innerHTML = `<div id="root"></div>`;
 vdom.mount('root', TodoApp);
 ```
@@ -323,7 +323,7 @@ Finally, within the `addItem()` function, invoke `vdom.refresh()`. This way ever
 
 When you are all done your `index.js` should look like this.
 
-```
+```javascript
 import { TodoList } from './TodoList';
 import { ToDoListItemCreator } from './TodoListItemCreator';
 import { VirtualDom } from './VirtualDom';
@@ -343,8 +343,8 @@ const addItem = (text) => {
 
 function TodoApp() {
     const div = document.createElement('div');
-    div.appendChild(ToDoListItemCreator({addItem}));
-    div.appendChild(TodoList({todo_items}));
+    div.appendChild(ToDoListItemCreator(addItem));
+    div.appendChild(TodoList(todo_items));
 
     return div;
 }
@@ -363,11 +363,11 @@ There is a lot here, so take a breather.
 
 The same strategy used for adding an item can be used here.
 However, instead of adding a new item to the end of 
-the `todo_items` array, the `updateItem` method will 
+the `todo_items` array, the new `updateItem` function will 
 replace the item at position `i`.  Add the following 
 function to `index.js`
 
-```
+```javascript
 const updateItem = (i, item) => {
     todo_items[i] = item;
     vdom.refresh();
@@ -386,27 +386,29 @@ will be specific to a unique `todo_item` it can be assigned as
 a property on that todo item.  Update the `for` loop 
 inside `TodoList` as follows: 
 
-```
+```javascript
 for(let i = 0 ; i < todo_items.length; i++) {
     const item = todo_items[i];
     item.toggleComplete = () => {
         item.complete = !item.complete;
         updateItem(i, item);
     }
-    div.add(TodoListItem({item}));
+    div.add(TodoListItem(item));
 }
 ```
 
-Here a new property `toggleComplete` is defined on a `todo_item`. 
+Here a new property `toggleComplete` is defined on an `item`. 
 The property is a function that will toggle the `complete` property
-of the item, and then call `updateItem` to modify that item. Why is
-the call to `updateItem` necessary?  
+of the item, and then call `updateItem` to modify that item and
+refresh the DOM. To repeat... the `updateItem` method must be called
+because that is what will invoke the `refresh()` function on the 
+Virtual DOM, which will then update the actual DOM. 
 
 Now, inside of `TodoListItem`, register an event handler that will 
 call `item.toggleComplete()` when the user clicks on the element. 
 It will look like this:
 
-```
+```javascript
 export function TodoListItem(item) {
     const div = document.createElement('div');
     const image = `<img src="${item.complete ? checked : unchecked}" width="20" height="20"/>`;
@@ -430,21 +432,20 @@ To put a pretty bow on this package, add some styling.
 First add two node packages to the application that will allow webpack
 to load css. 
 
-```
+```bash
 npm add css-loader style-loader -D
 ```
 
 Next configure webpack to load stylesheets when it encounters a `.css` file
 by adding the following rule to the `rules` array of `webpack.config.js`
 
-```
+```javascript
 { test: /\.css$/, use: ["style-loader", "css-loader"] },
 ```
 
 Now create a stylesheet `TodoApp.css`
 
-```
-
+```css
 .TodoApp {
     width: 80%;
     margin: auto;
@@ -472,6 +473,10 @@ Now create a stylesheet `TodoApp.css`
     cursor: pointer;
 }
 
+.TodoListItem:hover {
+    background: #eee;
+}
+
 .TodoListItem img {
     vertical-align: middle;
     margin-right: 0.5em;
@@ -484,9 +489,12 @@ For example, add `div.className = "TodoList";` to
 the `TodoList` function.  
 
 Add this import statement to `index.js`:
-```
+```javascript
 import './TodoApp.css';
 ```
+
+The Todo Application is now fully functional and ready for prime time. 
+
 
 ## Summary
 
@@ -515,10 +523,13 @@ yourself what every line of code does, and why it is important.
 
 Despite our hard work, there is something not quite satisfying about 
 the Virtual DOM implementation introduced in this chapter.  
+
 A real Virtual DOM will detect changes in components and 
 rerender the application.  The implementation here  
-must be manually refreshed by our event handler.  There are many ways to solve 
-this problem.  The next chapter will introduce a simple 
+must be manually refreshed by the event handlers.  
+
+There are many ways to solve 
+this problem, and the next chapter will introduce a simple 
 implementation of a hook to track changes that require a refresh 
 to the DOM.
 
