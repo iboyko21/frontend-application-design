@@ -1,10 +1,10 @@
 # Chapter 2: Components and the Virtual DOM
 
-Modern front-end frameworks are powerful because they manage the rendering of the application in the browser based on user interaction.  All frameworks achieve this by adding a layer of abstraction between the application and the document object model (DOM).  This layer of abstraction is typically called the Virtual DOM.  
+Modern front-end frameworks are powerful because they manage updates and rendering of the application in the browser based on user interaction.  All frameworks achieve this by adding a layer of abstraction between the application and the document object model (DOM).  This layer of abstraction is called the Virtual DOM or the Fabric.
 
 In this chapter we will build a very simple Virtual DOM, and use it to render components.  
 
-To illustrate the Virtual DOM, this chapter will guide you through the creation of a to-do list application.  The application has the following user stories:
+To illustrate the Virtual DOM, this chapter will guide you through the creation of a To-Do list application.  The application has the following user stories:
 
 1. <a name="user-story-1"></a>As a user, I want to add an item to my todo list.
     * Type up to 50 characters in a single line text input.
@@ -22,9 +22,12 @@ To illustrate the Virtual DOM, this chapter will guide you through the creation 
 ## Pre-reading
 
 * [Using `fetch()`](https://developer.mozilla.org/en-US/docs/Web/API/Fetch_API/Using_Fetch)
+* [Scope](https://developer.mozilla.org/en-US/docs/Glossary/Scope)
+* [Closures](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Closures)
 * [`<input type="text">` Documentation](https://developer.mozilla.org/en-US/docs/Web/HTML/Element/input/text)
 * [`keyup` events](https://developer.mozilla.org/en-US/docs/Web/API/Element/keyup_event)
 * [Destructuring Assignment](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Destructuring_assignment)
+* [addEventListener](https://developer.mozilla.org/en-US/docs/Web/API/EventTarget/addEventListener)
 
 ## Instructions
 
@@ -132,25 +135,25 @@ for each item in the list.
 ```javascript
 import { TodoListItem } from "./TodoListItem";
 
-export function TodoList(todo_items) {
+export function TodoList(todoItems) {
     const div = document.createElement('div');
-    for(let i = 0 ; i < todo_items.length; i++) {
-        const item = todo_items[i];
+    for(let i = 0 ; i < todoItems.length; i++) {
+        const item = todoItems[i];
         div.appendChild(TodoListItem(item));
     }
     return div;
 }
 ```
 
-Now import `TodoList` into `index.js`.  Remove the lines where you append `TodoListItem` components directly to the document body and instead create an Array of those items named `todo_items` and append a `TodoList` component to the document body, passing `todo_items` as its argument.
+Now import `TodoList` into `index.js`.  Remove the lines where you append `TodoListItem` components directly to the document body and instead create an Array of those items named `todoItems` and append a `TodoList` component to the document body, passing `todoItems` as its argument.
 
 ```javascript
-const todo_items = [
+const todoItems = [
     {complete: true, text: "This is complete"},
     {complete: false, text: "This is not complete"}
 ];
 
-document.body.appendChild(TodoList(todo_items));
+document.body.appendChild(TodoList(todoItems));
 ```
 
 Wonderful! At this point your application should look something like the screenshot below.
@@ -172,13 +175,13 @@ actually add new items to the todo list.  There is where things
 start to get tricky.
 
 Create a new function in `index.js` called `addItem`.  This 
-function will push an item onto the end of the `todo_items` 
+function will push an item onto the end of the `todoItems` 
 Array.
 
 ```javascript
 const addItem = (text) => {
     const item = {complete: false, text}
-    todo_items.push(item);
+    todoItems.push(item);
 }
 ```
 
@@ -235,10 +238,12 @@ this tutorial, we can create a very simple Virtual DOM to illustrate the process
 
 Our Virtual DOM will be a class with two very simple methods: `mount()` and `refresh()`.  
 
-Create a new file `src/VirtualDom.js` that exports a class named `VirtualDom`.
+Create a new file `src/VirtualDom.js` that defines a class named `VirtualDom`.  Then
+export a newly initialized instance of this class (Note: This is an ES6 version of a Singleton 
+Pattern).
 
 ```javascript
-export class VirtualDom {
+class VirtualDom {
 
     /** 
      * Mount a component at the given element.
@@ -256,7 +261,10 @@ export class VirtualDom {
     refresh() {
       // We will add code here
     }
-  }
+}
+
+export const VDOM = new VirtualDom(); 
+
 ```
 
 The `mount()` method takes two arguments.  The `id` of an HTML element at which to mount a functional component, and the `component` to mount.  Mounting is an **important** concept in front-end architecture.  
@@ -291,25 +299,32 @@ then assigned to the `new_element` variable.
 
 To use our Virtual DOM we need to import and instantiate it, define a mount point, and define the root functional component to mount there.  
 
-Import the `VirtualDom` class into `index.js` and instantiate it. 
+Import the `VDOM` into `index.js`. 
 
 ```javascript
-import { VirtualDom } from './VirtualDom';
+import { VDOM } from './VirtualDom';
 
-const vdom = new VirtualDom();
 ```
 
-Create a new function `TodoApp` that creates a `<div>` element and move the `TodoListItemCreator` and the `TodoList` into this `<div>`. 
+Create a new function `TodoApp` *within `index.js`* that creates a `<div>` element and move the `TodoListItemCreator` and the `TodoList` into this `<div>`.  Why is `TodoApp` created within `index.js` when all the other
+components were placed in their own file?  
 
 ```javascript
 function TodoApp() {
     const div = document.createElement('div');
     div.appendChild(ToDoListItemCreator(addItem));
-    div.appendChild(TodoList(todo_items));
+    div.appendChild(TodoList(todoItems));
 
     return div;
 }
 ```
+
+`TodoApp` is created within `index.js` because `todoItems` is defined
+in the top-level scope of `index.js`.  If `todoItems` is defined within one of 
+the components, it will be re-initialized every time the VDOM re-renders.  This
+would cause the list to re-initialize.  So we must define `TodoApp` in
+a location where `todoItems` is within scope.  The same line of reasoning
+applies to the `addItem` function.
 
 Add a `<div>` element whose id is `root` to the document body, then, at the bottom of `index.js`, mount `TodoApp` at `root`.
 
@@ -317,40 +332,38 @@ Add a `<div>` element whose id is `root` to the document body, then, at the bott
 document.body.innerHTML = `<div id="root"></div>`;
 vdom.mount('root', TodoApp);
 ```
-Notice that we did not mount `TodoApp()`, we mounted `TodoApp`.  The VirtualDOM will call this function every time `refresh()` is invoked and replace the contents of `<div id="root" />` with the result.  
+Notice that we did not mount `TodoApp()`, we mounted `TodoApp`.  The VDOM will call this function every time `refresh()` is invoked and replace the contents of `<div id="root" />` with the result.  
 
-Finally, within the `addItem()` function, invoke `vdom.refresh()`. This way every new item added will trigger the Virtual DOM to refresh the actual DOM. 
+Finally, within the `addItem()` function, invoke `VDOM.refresh()`. This way every new item added will trigger the Virtual DOM to refresh the actual DOM. 
 
 When you are all done your `index.js` should look like this.
 
 ```javascript
 import { TodoList } from './TodoList';
 import { ToDoListItemCreator } from './TodoListItemCreator';
-import { VirtualDom } from './VirtualDom';
+import { VDOM } from './VirtualDom';
 
-const vdom = new VirtualDom();
-
-const todo_items = [
+const todoItems = [
     {complete: true, text: "This is complete"},
     {complete: false, text: "This is not complete"}
 ];
 
 const addItem = (text) => {
     const item = {complete: false, text}
-    todo_items.push(item);
-    vdom.refresh();
+    todoItems.push(item);
+    VDOM.refresh();
 }
 
 function TodoApp() {
     const div = document.createElement('div');
     div.appendChild(ToDoListItemCreator(addItem));
-    div.appendChild(TodoList(todo_items));
+    div.appendChild(TodoList(todoItems));
 
     return div;
 }
 
 document.body.innerHTML = `<div id="root"></div>`;
-vdom.mount('root', TodoApp);
+VDOM.mount('root', TodoApp);
 ```
 
 Test out your application. You should now be able to add items to the todo list.  
@@ -363,32 +376,29 @@ There is a lot here, so take a breather.
 
 The same strategy used for adding an item can be used here.
 However, instead of adding a new item to the end of 
-the `todo_items` array, the new `updateItem` function will 
+the `todoItems` array, the new `updateItem` function will 
 replace the item at position `i`.  Add the following 
 function to `index.js`
 
 ```javascript
 const updateItem = (i, item) => {
-    todo_items[i] = item;
-    vdom.refresh();
+    todoItems[i] = item;
+    VDOM.refresh();
 }
 ```
 
-Pass the `updateItem` function as a prop to `TodoList`, 
-and update the argument of `TodoList` to accept the function. 
+Pass the `updateItem` function as an argument to `TodoList`. 
 
-The `updateItem` function takes an index as an argument, and 
-inside `TodoList` there is a loop over `todo_items`.  
-This is a nice opportunity to create a unique function
+Now there is an opportunity within `TodoList` to create a unique function
 for each item in the list that is responsible for updating
 that todo item and only that todo item.  Because the function
-will be specific to a unique `todo_item` it can be assigned as
+will be specific to a unique todo item it can be assigned as
 a property on that todo item.  Update the `for` loop 
 inside `TodoList` as follows: 
 
 ```javascript
-for(let i = 0 ; i < todo_items.length; i++) {
-    const item = todo_items[i];
+for(let i = 0 ; i < todoItems.length; i++) {
+    const item = todoItems[i];
     item.toggleComplete = () => {
         item.complete = !item.complete;
         updateItem(i, item);
@@ -400,7 +410,7 @@ for(let i = 0 ; i < todo_items.length; i++) {
 Here a new property `toggleComplete` is defined on an `item`. 
 The property is a function that will toggle the `complete` property
 of the item, and then call `updateItem` to modify that item and
-refresh the DOM. To repeat... the `updateItem` method must be called
+**refresh the DOM**. To repeat... the `updateItem` method **must** be called
 because that is what will invoke the `refresh()` function on the 
 Virtual DOM, which will then update the actual DOM. 
 
@@ -424,6 +434,137 @@ export function TodoListItem(item) {
 
 Test out the application.  It should be possible to check and uncheck each
 todo item.  
+
+Despite our hard work, there is something not quite satisfying about 
+the Virtual DOM implementation introduced thus far.  
+
+A real Virtual DOM will detect changes in components and 
+re-render the application.  The implementation here  
+must be manually refreshed by the event handlers.  
+
+### Detecting State Change with Hooks
+
+The current implementation works because `todoItems` is defined at the top-level scope
+and the event handlers operate in a scope where they have access to this array.  
+This is a very limiting design pattern, because it would require all state and event
+handlers to be defined at the top-level of the application.  If this application 
+got any more complex, the code would bloat and become unreadable very quickly. 
+
+The new goal is to build a mechanism whereby any component, not just the top-level components,
+can access and modify state information.  This is where the concept of *hooks* comes in.
+
+A hook is a *function* provided by the Virtual DOM keep track of any changes that require a re-render.
+Currently we declare the variable `todoItems` in `index.js` and manually trigger  
+`VDOM.refresh()` when  `todoItems` changes.  Now the Virtual DOM will store these variables and
+provide them to components via a hook.  When the variables are modified, the VDOM will intercept
+the request and schedule a refresh.
+
+To do this we will add a function to the Virtual DOM called `useState()`.  This function
+will return a variable and a function to set that variable.  We can use the variable
+in our components, and we can change the variable using the provided function.  
+
+Add the following code to `VirtualDom.js`
+
+```javascript
+// Cache state pairs in this array
+const hooks = [];
+let hookIndex = 0;
+
+/**
+ * Return a two element array.  
+ * First element is the current value 
+ * Second element is a function that sets the value.
+ * 
+ * @param initial  The initial value
+ */
+export function useState(initial) { 
+  
+  // Return the cached pair if it exists
+  let pair = hooks[hookIndex];
+  if (pair) {
+      hookIndex++;
+      return pair;
+  }
+
+  // No cached pair found. Initialize a new one.
+  pair = [initial, (v) => { pair[0] = v; VDOM.refresh(); }];
+
+  // Cache the pair.
+  hooks[hookIndex] = pair;
+  hookIndex++;
+
+  return pair;
+
+}
+```
+First, look at what the `useState` function returns.  It returns something called `pair`.  
+The `pair` that it is returning is a two element array.  The first element of the array
+is a value, and the second element of the array is a function that modifies the first 
+element and calls `VDOM.refresh()`.  
+
+When `useState` is called, it checks to see if a previously cached pair exists.  
+If it does, then it returns this pair.  If not then it initializes a pair and adds
+it to the cache, which is just an array named `hooks`.
+
+In this implementation, the cache is just an array that is indexed by an integer.  It 
+assumes that `useState` will be called during rendering the same number of times and in the
+same order every time.  While it is possible to write a more complex and robust version of
+this cache, frameworks such as React also have rules about where the `useState()`
+hook can be invoked.  This is because it must be invoked in a deterministic fashion to reliably
+deliver the correct values to each component.
+
+The `useState()` function takes advantage of the Javascript concept of a *closure*.  
+A closure is a way to save a function along with independent copies of the variables 
+that are within scope when the function is defined.  This is a tough concept for 
+new developers, so don't feel bad if it doesn't sink in right now.  Let it rattle 
+around in the back of your head as you read this section, and over time it will 
+start to make sense. 
+
+Each time a new `pair` is created and cached, the second element is actually a 
+closure that includes a unique copy of the variable `pair`.  So each pair in 
+the `hooks` array is independent, and is only capable of modifying itself.   
+
+With this new capability `TodoApp` is no longer dependent on variables in the 
+top level scope and can be moved into its own file.  Make a new file `TodoApp.js`
+with the following code:
+
+```javascript
+import { TodoList } from './TodoList';
+import { ToDoListItemCreator } from './TodoListItemCreator';
+import { useState } from './VirtualDom';
+
+export function TodoApp() {
+    
+    const [todoItems, setTodoItems] = useState([]);
+        
+    const addItem = (text) => {
+        const item = {complete: false, text}
+        setTodoItems(todoItems.push(item));
+    }
+
+    const updateItem = (i, item) => {
+        todoItems[i] = item;
+        setTodoItems(todoItems);
+    }
+
+    const div = document.createElement('div')
+    div.appendChild(ToDoListItemCreator(addItem));
+    div.appendChild(TodoList(todoItems, updateItem));
+    return div;
+}
+```
+
+Now `index.js` can be simplified to the following:
+
+```javascript
+import { VDOM } from './VirtualDom';
+import { TodoApp } from './TodoApp';
+
+document.body.innerHTML = `<div id="root"></div>`;
+VDOM.mount('root', TodoApp);
+```
+
+The application is now fully functional... But it isn't pretty yet.
 
 ### (Optional) - Style The Application
 
@@ -521,16 +662,13 @@ Go back and take note of what was confusing, then run
 looks like.  Try not to move on until you can explain to
 yourself what every line of code does, and why it is important.
 
-Despite our hard work, there is something not quite satisfying about 
-the Virtual DOM implementation introduced in this chapter.  
-
-A real Virtual DOM will detect changes in components and 
-rerender the application.  The implementation here  
-must be manually refreshed by the event handlers.  
-
 There are many ways to solve 
 this problem, and the next chapter will introduce a simple 
 implementation of a hook to track changes that require a refresh 
 to the DOM.
 
 ## References
+
+* [https://reactjs.org/docs/faq-internals.html](https://reactjs.org/docs/faq-internals.html)
+* [https://reactjs.org/docs/reconciliation.html](https://reactjs.org/docs/reconciliation.html)
+* [https://www.netlify.com/blog/2019/03/11/deep-dive-how-do-react-hooks-really-work/](https://www.netlify.com/blog/2019/03/11/deep-dive-how-do-react-hooks-really-work/)
