@@ -4,28 +4,32 @@ The objective of this course is to introduce new developers to the technologies 
 deploying a modern single page web application from the ground up.  The course focuses heavily on software engineering 
 principles using modern frameworks as enablers rather than crutches.  
 
-Chapters 1 and 2 introduce core concepts of application frameworks but without the frameworks. Once the foundations are laid, chapters 3 through 8 rewrite the application in a Model-View Pattern with React using Material UI.  Typescript and Unit Testing are introduced as critical elements of writing high quality code. 
+Chapters 1 through 3 introduce core concepts of application frameworks but without the frameworks. Once the foundations are laid, chapters 4 through 8 
+rebuild the application in a Model-View Pattern with React using Material UI.  Typescript and Unit Testing are introduced as critical elements of writing 
+high quality code. 
 
-At the conclusion of this course, a developer will have an understanding and recognition not only of common patterns utilized when building react applications, 
-but an appreciation for the how and why behind those patterns.  
+At the conclusion of this course, a developer will have an understanding and recognition not only of common patterns utilized when building react 
+applications, but an appreciation for the how and why behind those patterns.  
 
-## Part 1 - ??
+## Part 1 - Foundations
 [Chapter 1: Initial setup using node and webpack](chapter1/README.md)
 
 [Chapter 2: Components and the Virtual DOM](chapter2/README.md)
 
+[Chapter 3: How hooks work](chapter3/README.md)
+
 ## Part 2 - Using React
-[Chapter 3: Laying out a React/Typescript Application](chapter3/README-vite.md)
+[Chapter 4: Laying out a React/Typescript Application](chapter4/README.md)
 
-[Chapter 4: Create the Data Model](chapter4/README.md)
+[Chapter 5: Start With a Well Tested Data Model](chapter5/README.md)
 
-[Chapter 5: Building Views with Material UI](chapter5/README.md)
+[Chapter 6: Building Views with Material UI](chapter6/README.md)
 
-[Chapter 6: useState and useEffect - The primary hooks for triggering updates](chapter6/README.md)
+[Chapter 7: useState and useEffect - The primary hooks for triggering updates](chapter7/README.md)
 
-[Chapter 7: Routing with React](chapter8/README.md)
+[Chapter 8: Routing and Error Boundaries](chapter8/README.md)
 
-[Chapter 8: The right time and place to for useRef and useReducer ](chapter7/README.md)
+[Chapter 9: Manipulating Deep State with Context and Reducers ](chapter9/README.md)
 
 
 

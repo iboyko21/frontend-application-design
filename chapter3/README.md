@@ -1,162 +1,212 @@
-# React Project
+# Chapter 3: How Hooks Work
 
-Part 1 of this course introduced webpack, functional components, 
-and the virtual DOM.  The concepts presented were important 
-because they illustrate at a very basic level what more 
-sophisticated frameworks are doing.  As you start to build 
-applications with more sophisticated frameworks, you will quickly 
-encounter unexpected behaviors.  When this happens fallback on 
-your understanding of what the framework is doing under the hood 
-to help think through and resolve the issues.
+In Chapter 2 we saw how a Virtual DOM works to render components into the DOM. 
+However, the responsibility for triggering a refresh remained inside the `addItem()`
+and `updateItem()` callback functions.  As applications become more complex, leaving
+the responsibility for triggering refreshes to the application becomes problematic. 
+Multiple components may be trying to update and refresh the DOM simultaneously, and 
+this will impact the performance and user experience.  
 
-React includes a very sophisticated layer called the Fabric that
-is responsible for determing what parts of the DOM to rerender and
-when.  The Fabric is tightily integrated with several `hooks` give
-the developer fine grained control over what triggers a rerender of
-the application.  
+It is much more sensible to allocate the responsibility for managing the DOM refresh to 
+the Virtual DOM.  In this way the Virtual DOM can track all of the requests for refresh, 
+and schedule and execute the rerendering of the DOM in the most optimal fashion.  But in
+order for the Virtual DOM to do this, it must provide functions - or *hooks* - to the 
+application that allow the application to communicate to the Virtual DOM that changes to 
+specific values require a refresh.  
 
-Part 2 explores building an application in React and presents 
-useful patterns and guidelines for how to structure the 
-application.  
+In this chapter, we will create a basic implementation of the `useState` hook. 
 
 ## Pre-reading
 
+* [Hooks Overview](https://reactjs.org/docs/hooks-overview.html)
+* [The Rules of Hooks](https://reactjs.org/docs/hooks-rules.html)
+* [Scope](https://developer.mozilla.org/en-US/docs/Glossary/Scope)
+* [Closures](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Closures)
+
 ## Instructions 
 
-### Setup the Project
+Run `git checkout chapter3` and lets get started... 
 
-Run `git checkout chapter3` to create a new directory named `react-todo` with a basic
-`package.json` and `webpack.config.js`
+### Add a `myUseState()` function to the Virtual DOM
 
-#### Create the Project Directory Structure
-First create the directory structure that will house the application.  
+The current implementation works because the `addItem()` and `updateItem()` callbacks explicitly
+invoke `VDOM.refresh()` after updating the `todoItems` array.  
 
-```
-- react-todo
-   - package.json
-   - webpack.config.js
-  +- src
-     +- api
-     +- layout
-     +- models
-     +- ui-components
-     +- views
-      - index.jsx
-      - TodoApp.jsx
-```
+The new goal is to build a mechanism whereby any component in the hierarchy can modify information
+and trigger a refresh to the DOM.  This is where the concept of *hooks* comes in.
 
-There is no standard directory structure, and each project may 
-adopt a slightly different approach, but this is a safe starting 
-point.  
+A hook is a *function* provided by the Virtual DOM keep track of any changes that require a re-render.
+Currently we declare the variable `todoItems` in `TodoApp.js` and manually trigger  
+`VDOM.refresh()` when  `todoItems` changes.  Now the Virtual DOM will store variables such as `todoItems` 
+and provide them to components via a hook.  When the variables are modified, the VDOM will intercept
+the request and schedule a refresh.
 
-This project will utilize a Model-View design pattern.  
-The *Models* are containers for data with and have no dependencies
-on the DOM or any visual representation.  Separating the code that is concerned with visual representation from the code that is concerned with data management makes the application simpler to read and more adaptable to change.
+To do this we will add a function to the Virtual DOM called `myUseState()`.  This function
+will return a variable and a function to set that variable.  We can use the variable
+in our components, and we can change the variable using the provided function.  
 
-Within the `src` directory there are four new folders.  
- * `api` will house the code that interfaces with the backend
- * `layout` will include the elements that provide a consistent layout for the application.  
- * `models` will include code for managing data 
- * `ui-component` will include components that get reused in different views.
- * `views` will include the code for rendering data in the DOM
-
-#### Add React and Babel
-React requires the installation of additional node modules and some
-additional webpack configuration.  Not only does the react library 
-itself need to be installed, but webpack must be configured with a loader and rules to transpile the JSX syntax used by React.
-
-Add `react` and `react-dom` to your project
-
-```
-npm add react react-dom
-```
-
-Now add `babel` to your project as a development dependency.
-
-```
-npm add -D @babel/preset-react @babel/preset-env @babel/core
-```
-
-Edit `package.json` and include the following babel configuration
-```json
-  ...
-  "babel": {
-    "presets": [
-      "@babel/preset-env",
-      "@babel/preset-react"
-    ]
-  },
-  ...
-```
-
-Edit `webpack.config.js` to include a directive to resolve files with `.jsx` extensions and a rule to load those files with the `babel-loader`.
+Add the following code to `VirtualDom.js`
 
 ```javascript
-    ...
-    resolve: {
-      extensions: ['*', '.js', '.jsx'],
-    },
-    module: {
-      rules: [
-        ...
-        {
-          test: /\.(jsx?)$/,
-          exclude: /node_modules/,
-          use: ['babel-loader']
-        },
-        ...
-      ]
-    },
+// Cache state pairs in this array
+const hooks = [];
+
+// Reset this to zero at the end of a rendering cycle
+// Increment it during each invocation of myUseState
+let hookIndex = 0;
+
+/**
+ * Return a two element array.  
+ * First element is the current value 
+ * Second element is a function that sets the value.
+ * 
+ * @param initial  The initial value
+ */
+export function myUseState(initial) { 
+  
+  // Return the cached pair if it exists
+  let pair = hooks[hookIndex];
+  if (pair) {
+      hookIndex++;
+      return pair;
+  }
+
+  // No cached pair found. Initialize a new one.
+  pair = [initial, (v) => { pair[0] = v; VDOM.refresh(); }];
+
+  // Cache the pair.
+  hooks[hookIndex] = pair;
+  hookIndex++;
+
+  return pair;
+
+}
 ```
-Add the following code to a file named `src/index.jsx`
+First, look at what the `myUseState` function returns.  It returns something called `pair`.  
+The `pair` that it is returning is a two element array.  The first element of the array
+is a value, and the second element of the array is a function that modifies the first 
+element and calls `VDOM.refresh()`.  
 
-```javascript
-import React from 'react';
-import { createRoot } from 'react-dom/client';
-import TodoApp from './TodoApp';
+When `myUseState` is called, it checks to see if a previously cached **pair** exists.  
+If it does, then it returns this pair.  If not then it initializes a pair and adds
+it to the cache... which is just an array named `hooks`.
 
-// Create the root element.
-const container = document.createElement('div');
-document.body.appendChild(container);
-const root = createRoot(container);
+In this implementation, the cache is just an array that is indexed by an integer.  It 
+assumes that `myUseState` will be called during rendering the same number of times and in the
+same order every time.  While it is possible to write a more complex and robust version of
+this cache, frameworks such as React also have [rules](https://reactjs.org/docs/hooks-rules.html) about where the `useState()`
+hook can be invoked.  This is because it must be invoked in a deterministic fashion to reliably
+deliver the correct values to each component.
 
-// Render the application in the root element.
-root.render(<TodoApp />);
-```
+Our `myUseState()` function takes advantage of the Javascript concept of a *closure*.  
+A closure is a way to save a function along with independent copies of the variables 
+that are within scope when the function is defined.  This is a tough concept for 
+new developers, so don't feel bad if it doesn't sink in right now.  Let it rattle 
+around in the back of your head as you read this section, and over time it will 
+start to make sense. 
 
-Finally create a file named `src/TodoApp.jsx` that returns 
-a JSX fragment.
+Each time a new `pair` is created and cached, the second element is actually a 
+closure that includes a unique copy of the variable `pair`.  So each pair in 
+the `hooks` array is independent, and is only capable of modifying itself.   
+
+### Reset the `hookIndex` after each rendering cycle
+
+The state pairs are cached in an array within the File scope of the Virtual DOM.  
+Every time `myUseState()` is invoked it increments an index used to lookup the next
+hook *pair* that is cached in the array.  When the rendering cycle is complete, it is
+necessary to reset the index back to 0.  
+
+Add the following function to `VirtualDom.js`
 
 ```js
-import React from 'react';
-
-export default function TodoApp() {
-    return (<h1>My Todo Lists</h1>)
+/**
+ * Reset indicies for all hooks cached in the VDOM
+ */
+function resetHookIndicies() {
+    hookIndex = 0;
 }
 ```
 
-Run the application by typing `npm run start`.
+And invoke the `resetHookIndicies()` function at the bottom of the `refresh()` function.
 
+### Utilize the Hook
 
-### Add a Unit Test
+With this new capability `TodoApp` no longer needs to call `VDOM.refresh()`.  
+Within `TodoApp` replace the import of `VDOM` with an import of `myUseState`.  
+Initialize the `[todoItems, setTodoItems]` pair with a call to `myUseState` 
+passing an empty array as the initial value, and move the `addItem` and `updateItem` 
+functions into the body of the `TodoAp` function.
 
-Unit Testing is a fundamental aspect of software development.  
-Develop a habit of writing unit tests and you will find bugs very 
-early in the development cycle.
+Finally, replace the calls to `VDOM.refresh()` with calls to `setTodoItems(todoItems)`.  
 
-There are many choices for unit testing frameworks.  This tutorial will use [Jest](https://jestjs.io/)
+The code should look as below:
 
-Install jest 
+```javascript
+import { TodoList } from './TodoList';
+import { ToDoListItemCreator } from './TodoListItemCreator';
+import { myUseState } from './VirtualDom';
+
+export function TodoApp() {
+    
+    const [todoItems, setTodoItems] = myUseState([]);
+        
+    const addItem = (text) => {
+        const item = {complete: false, text}
+        setTodoItems(todoItems.push(item));
+    }
+
+    const updateItem = (i, item) => {
+        todoItems[i] = item;
+        setTodoItems(todoItems);
+    }
+
+    const div = document.createElement('div')
+    div.appendChild(ToDoListItemCreator(addItem));
+    div.appendChild(TodoList(todoItems, updateItem));
+    return div;
+}
 ```
-npm add -D jest react-test-renderer
-```
 
-Here we will use `react-test-renderer` to render an expectation of 
-what we expect a component to produce into a variable named `tree`.  Then we will compare that to what is actually rendered using `expect(tree).toMatchSnapshot()`.  
+Spend a moment and think through what happens when `myUseState([])` and `setTodoItems(items)`
+are invoked.  Recall that `myUseState([])` will return a *pair*.  The first item of that pair 
+is the value currently cached in the `VDOM`'s `hooks` array.  The second item, `setTodoItems()` 
+is a function that replaces the first item in the cash and then calls `VDOM.refresh()`.  
 
+
+Commit your code, run the application, and verify that everything works.  
+
+### What about useEffect
+
+React provides many other hooks besides `useState()`.  The other common hook is called
+`useEffect`.  This hook gets its name from the idea that it performs a *side effect* after rendering is complete.  
+The `useEffect` hook is intended to replace code that was previously invoked in `componentDidMount`.  
+Examples of side effects are:
+
+* fetching data from a server
+* moving the focus to an input element
+* Updating the document title 
+
+The `useEffect` hook takes a function and an optional dependency as an argument.  The Virtual DOM will add the
+effect function to a queue of functions to call, and then call them successively after the DOM is finished rendering.  
+
+Managing the execution of effect functions without triggering an infinite loop is non-trivial.   Rather than
+leading the student through the construction of this hook in a step by step manner, the student is
+encouraged to study the implementation in the `chapter3-solution` branch. 
+
+
+## Summary 
+
+This chapter extended the simple Virtual DOM to include *hooks*.  Hooks are functions provided by the Virtual DOM 
+that permit components to modify information and execute functions that will then trigger a refresh of the DOM.  
+
+There are rules to how hooks can be untilized to ensure that the DOM rendering is deterministic and does not result
+in infinite loops.  
+
+With this foundational understanding, it is now time to start Part 2 of this course, and build an application using 
+all of the modern convenicnes of the react Framework. 
 
 ## References
 
-* https://www.robinwieruch.de/minimal-react-webpack-babel-setup/
-
+* [https://reactjs.org/docs/faq-internals.html](https://reactjs.org/docs/faq-internals.html)
+* [https://www.netlify.com/blog/2019/03/11/deep-dive-how-do-react-hooks-really-work/](https://www.netlify.com/blog/2019/03/11/deep-dive-how-do-react-hooks-really-work/)
 
