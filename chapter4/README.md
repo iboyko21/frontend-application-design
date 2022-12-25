@@ -1,5 +1,6 @@
 # Chapter 3 : React
 
+In this chapter, you will scaffold a React/Typescript application using the *Vite* toolchain, and add a simple unit test.  
 
 Part 1 of this course introduced webpack, functional components, 
 and the virtual DOM.  The concepts presented were important 
@@ -28,8 +29,9 @@ library called Material UI.
 ## Pre-reading
 
 * [Vite | Next Generation Frontend Tooling](https://vitejs.dev/)
-* [Typescript](https://www.typescriptlang.org/)
-* [Material UI](https://mui.com/material-ui/getting-started/overview/)
+* [Destructuring Assignment](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Destructuring_assignment)
+* [JSX](https://reactjs.org/docs/introducing-jsx.html)
+* [react-testing-library cheatsheet](https://testing-library.com/docs/react-testing-library/cheatsheet)
 
 ## Instructions 
 
@@ -94,7 +96,7 @@ on to view the application.
 The default application is pretty, but it doesn't keep track of todo items. 
 
 Create a new file `src/TodoApp.jsx` that exports a functional component with a simple message.
-You can use JSX now that react is part of the infrastructure.
+You can use JSX now that React is part of the infrastructure.
 
 ```js
 import React from 'react';
@@ -131,7 +133,7 @@ We renamed main to `.jsx` because we are not quite ready to introduce Typescript
 If `npm run dev` is not already running, go ahead and run it now.  The browser tab displaying
 the application will now show our very simple message.  
 
-Now that you've proven to yourself you can bootstrap a react app, it is time to dig in to the 
+Now that you've proven to yourself you can bootstrap a react app with Vite, it is time to dig in to the 
 application architecture.
 
 ### Layout the Application Directory Structure
@@ -141,18 +143,17 @@ adopt a slightly different approach.  The strategy presented here is a safe star
 point that reflects a Model-View pattern and anticipates a common layout and an interface
 to an external API.  
 
-Create five new directories within the `src` directory as below.
+Create four new directories within the `src` directory as below.
  
 ```
 - react-todo
-   - package.json
+  ...
   +- src
      +- api
      +- layout
      +- models
-     +- ui-components
      +- views
-      - main.tsx
+      - main.jsx
       - TodoApp.jsx
 ```
 
@@ -160,8 +161,150 @@ Within the `src` directory there are four new folders.
  * `api` will house the code that interfaces with the backend
  * `layout` will include the elements that provide a consistent layout for the application.  
  * `models` will include code for managing data 
- * `ui-component` will include components that get reused in different views.
  * `views` will include the code for rendering data in the DOM
+
+### Create the Application Layout
+
+Inside the `layout` directory create three new files: `Header.jsx`, `Footer.jsx`, and `index.jsx`.  
+
+Inside `index.jsx` add the following code that will be the primary layout for the application. 
+
+```js
+import React from 'react';
+import Header from './Header';
+import Footer from './Footer';
+
+const MainLayout = (props) => {
+
+    return (
+        <>
+            <Header />
+            <main>
+                {props.children}
+            </main>
+            <Footer />
+        </>
+    )
+
+}
+
+export default MainLayout;
+```
+
+This layout renders a `Header` and a `Footer`, and in between in creates an html5 `<main>` element and populates it 
+with the contents of `props.children`.  `children` is a special property that is present on all React nodes. 
+It contains whatever content is present between the start and end tags of the calling component.  
+
+Now populate `Header.jsx` with a brightly colored `Div` element so that it is very obvious as you debug the layout.  
+You can change the styling later, but it is helpful to make new elements stand out when they are first introduced
+into the DOM.  
+
+```js
+import React from 'react';
+
+const Header = () => {
+
+    return (
+        <div style={{
+            position: 'absolute',
+            left: 0,
+            right: 0,
+            top: 0,
+            height: '100px',
+            backgroundColor: 'aqua',
+             border: '1px solid black'
+            }}>
+            <h1>Header</h1> 
+        </div>
+    )
+}
+
+export default Header;
+```
+
+Likewise, populate `Footer.jsx` with this code:
+
+```js
+import React from 'react';
+
+
+const Footer = () => {
+
+    return (
+        <div style={{
+            position: 'absolute',
+            left: 0,
+            right: 0,
+            bottom: 0,
+            height: '100px',
+            backgroundColor: 'aqua',
+            border: '1px solid black'}}>
+            <h1>Footer</h1> 
+        </div>
+    )
+}
+
+export default Footer;
+```
+
+Finally, modify `TodoApp` to import the MainLayout from `./layout` and return the following: 
+```js
+    <MainLayout>
+        <h1>My Todo App</h1>
+    </MainLayout>
+``` 
+
+Here `MainLayout` will be called and `props.children` will be automatically assigend to the `h1` tag. 
+
+Start the development server (if it isn't already running) and confirm the layout is working as desired.
+
+
+### Create a View for the TodoList
+
+Our application will be much more interesting if it actually manages a todo list.  Create a new file in
+the `src/views` directory named `TodoListView.jsx` that imports `React` and exports a default functional component named 
+`TodoListView`.  Use [destructuring assignment](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Destructuring_assignment) 
+to allow the component to accept single `prop` named `list`.  
+
+```js
+import React from 'react';
+
+const TodoListView = ({list}) => {
+    return (<></>);
+}
+
+export default TodoListView;
+```
+
+React components should never assume that the values passed in as props are defined.  For this reason, 
+there is a common syntax in JSX to render when a `prop` is defined, and render something else if it is not.
+The syntax makes use of the logical AND operator `&&`.  In javascript the following values are considered *falsy*: `""`, `undefined`, `null`, 
+`0`, and `false`.  The logical AND operator will evaluate each argument from left to right
+for *truthiness*.  As soon as it encounters something not truthy, it will stop evaluating and return the falsy value, and JSX will not render falsy values. If 
+all the arguments are truthy, it will return whatever the last argument evaluated to.  
+
+In the JSX expression below, if `list` is undefined, then `!list` evaluates to `true` and the javascript interpreter evaluates the next argument and returns the truthy value `"No List Selected"`. The expression below it, however, immediately evaluates to `false`. 
+The opposite occurs if `list` is defined. 
+ 
+```jsx
+{/* List is not defined */}
+{!list && "No List Selected"}
+
+{/* List is defined, render it */}
+{list && list.name}
+```
+
+Wrap the above code in an `<h2>` element and return it from `TodoListView`.  
+
+Now hop back over to `TodoApp.jsx`, import the `TodoListView`, and replace `<h1>My Todo App</h1>` 
+with `<TodoListView />`
+
+Confirm that **No List Selected** appears in the application preview.  
+
+Pass an object into `TodoListView` as a prop named `list`.  The object must have a `name`, for example
+`<TodoListView list={{name: "Grocery List"}} />`.  
+
+Confirm that the list name appears in the application preview.
 
 ### Install a Unit Testing Framework
 
@@ -172,7 +315,7 @@ unit testing framework right away.
 We will use `vitest`, which is a turn-key testing plugin that works natively with *Vite*.
 
 ``` 
-npm add -D vitest
+npm add -D vitest jsdom @testing-library/react @testing-library/jest-dom
 ```
 
 Now add the following directive to the `scripts` section of `package.json`
@@ -183,6 +326,108 @@ Now add the following directive to the `scripts` section of `package.json`
   }
 ```
 
+Vitest requires some configuration files to properly operate.  Add a file in the application root directory named `vitest.config.ts` with the following contents: 
+
+```js
+import {defineConfig} from 'vitest/config';
+
+export default defineConfig({
+    test: {
+        environment: 'jsdom',
+        globals: true,
+        setupFiles: 'vitest.setup.js'
+    }
+});
+```
+
+This configuration will permit vitest to render components into an offscreen DOM so that the unit tests can assert they are performing as desired. 
+
+Now add the file `vitest.setup.js` with the following contents:
+
+```js
+import { expect, afterEach } from 'vitest';
+import { cleanup } from '@testing-library/react';
+import matchers from '@testing-library/jest-dom/matchers';
+
+// extends Vitest's expect method with methods from react-testing-library
+expect.extend(matchers);
+
+// runs a cleanup after each test case (e.g. clearing jsdom)
+afterEach(() => {
+  cleanup();
+});
+```
+
+This setup adds specialized matchers to the assertion functions that will enable the ability to search and test the rendered DOM.
+
 ### Add a Unit Test
 
+Writing unit tests
+can often feel overwhelming.  One strategy for writing unit tests is to begin writing 
+very easy tests that exercise obvious and simple behaviors.  Then, as the application develops and
+grows in complexity, there will undoubedtly be situations where the application is not behaving 
+as intended.  Attempt to narrow the problematic behavior down to a specific function, and write a unit test
+that exercises what the intended behavior of that function in that specific scenario.  If that unit
+test passes, then the unit test suite is more comprehensive.  If the unit test doesn't pass, then 
+you have uncovered the source of the issue and can investigate a fix. 
 
+The first unit test for the application will assert that the `TodoListView` renders the list name.
+
+
+Unit tests are added in the same directory as the the file they are testing.  Add a file alongside `TodoListView.jsx` named `TodoListView.test.jsx` with the following content:
+
+```js
+import React from 'react';
+import {render, screen} from '@testing-library/react';
+import { describe, expect, it } from 'vitest';
+import TodoListView from './TodoListView';
+
+describe("TodoListView", () => {
+
+    it("should display 'No List Selected' if a list is not provided'", () => {
+        render(<TodoListView />);
+        expect(screen.getByText("No List Selected")).toBeTruthy();
+    })
+
+```
+
+This unit test uses an `expect ... to ... ` format common in behavior driven development.  
+
+The code is intended to read in close to natural english.  The test above reads "*TodoListView should display 'No List Selected' if a list is not provided*". 
+And within the test it reads, "*expect `screen.getByText("No List Selected")` to be truthy.*"  
+
+Run `npm run test` and the vitest runner will launch and should pass.  
+
+Try changing the assertion to `toBeFalsy()` and watch the test fail.  
+
+Add one more test that asserts the `TodoListView` correctly renders the list name.  The test will be: 
+
+```js
+describe("TodoListView", () => {
+
+    ...
+    
+    it("should display the list name if a list is provided", () => {
+        const list = {name: "Grocery List"};
+        render(<TodoListView list={list}/>);
+        expect(screen.getByText(list.name)).toBeTruthy();
+    })
+    
+    ...
+
+})
+```
+
+If you keep the unit tests short and simple, it will be easy to build a habit of writing unit tests as your application grows. 
+
+
+## Summary 
+
+This chapter introduced:
+
+* The Vite frontend toolchain and React.  
+* A general purpose application folder structure is presented.
+* A mechanism for embedding an application in a layout using `props.children`
+* Unit Testing 
+
+## References
