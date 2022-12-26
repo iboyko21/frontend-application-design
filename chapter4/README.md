@@ -1,4 +1,4 @@
-# Chapter 3 : React
+# Chapter 4 : React
 
 In this chapter, you will scaffold a React/Typescript application using the *Vite* toolchain, and add a simple unit test.  
 
@@ -12,9 +12,9 @@ your understanding of what the framework is doing under the hood
 to help think through and resolve the issues.
 
 React includes a very sophisticated layer called the Fabric that
-is responsible for determing what parts of the DOM to rerender and
+is responsible for determing what parts of the DOM to render and
 when.  The Fabric is tightily integrated with several `hooks`, and together these give
-the developer fine grained control over what triggers a rerender of
+the developer fine grained control over what triggers a re-render of
 the application.  
 
 Part 2 explores building an application in React and presents 
@@ -165,9 +165,9 @@ Within the `src` directory there are four new folders.
 
 ### Create the Application Layout
 
-Inside the `layout` directory create three new files: `Header.jsx`, `Footer.jsx`, and `index.jsx`.  
+Inside the `layout` directory create three new files: `Header.jsx`, `Footer.jsx`, and `MainLayout.jsx`.  
 
-Inside `index.jsx` add the following code that will be the primary layout for the application. 
+Inside `MainLayout.jsx` add the following code that will be the primary layout for the application. 
 
 ```js
 import React from 'react';
@@ -247,14 +247,14 @@ const Footer = () => {
 export default Footer;
 ```
 
-Finally, modify `TodoApp` to import the MainLayout from `./layout` and return the following: 
+Finally, modify `TodoApp` to import the MainLayout and return the following: 
 ```js
     <MainLayout>
         <h1>My Todo App</h1>
     </MainLayout>
 ``` 
 
-Here `MainLayout` will be called and `props.children` will be automatically assigend to the `h1` tag. 
+Here `MainLayout` will be called and `props.children` will be automatically assigned to the `<h1>` tag. 
 
 Start the development server (if it isn't already running) and confirm the layout is working as desired.
 
@@ -283,14 +283,13 @@ The syntax makes use of the logical AND operator `&&`.  In javascript the follow
 for *truthiness*.  As soon as it encounters something not truthy, it will stop evaluating and return the falsy value, and JSX will not render falsy values. If 
 all the arguments are truthy, it will return whatever the last argument evaluated to.  
 
-In the JSX expression below, if `list` is undefined, then `!list` evaluates to `true` and the javascript interpreter evaluates the next argument and returns the truthy value `"No List Selected"`. The expression below it, however, immediately evaluates to `false`. 
-The opposite occurs if `list` is defined. 
+In the JSX expression below, if `list` is undefined, then `!list` evaluates to `true` and the javascript interpreter evaluates the next argument and returns the truthy value `"No List Selected"`. The expression below it, however, immediately evaluates to `false` so nothing is rendered. The opposite occurs if `list` is defined. 
  
 ```jsx
 {/* List is not defined */}
 {!list && "No List Selected"}
 
-{/* List is defined, render it */}
+{/* List is defined */}
 {list && list.name}
 ```
 
@@ -312,7 +311,7 @@ Unit Testing is a fundamental aspect of modern software development.  This cours
 lacking if it bypassed such an important aspect of software development, so let's set up a 
 unit testing framework right away. 
 
-We will use `vitest`, which is a turn-key testing plugin that works natively with *Vite*.
+We will use `vitest`, which is a unit test runner that works natively with *Vite*.
 
 ``` 
 npm add -D vitest jsdom @testing-library/react @testing-library/jest-dom
@@ -340,7 +339,7 @@ export default defineConfig({
 });
 ```
 
-This configuration will permit vitest to render components into an offscreen DOM so that the unit tests can assert they are performing as desired. 
+This configuration will permit vitest to render components into an offscreen DOM so that the unit tests can assert that components are rendering as desired. 
 
 Now add the file `vitest.setup.js` with the following contents:
 
@@ -367,14 +366,14 @@ can often feel overwhelming.  One strategy for writing unit tests is to begin wr
 very easy tests that exercise obvious and simple behaviors.  Then, as the application develops and
 grows in complexity, there will undoubedtly be situations where the application is not behaving 
 as intended.  Attempt to narrow the problematic behavior down to a specific function, and write a unit test
-that exercises what the intended behavior of that function in that specific scenario.  If that unit
+that exercises the intended behavior of that function in that specific scenario.  If that unit
 test passes, then the unit test suite is more comprehensive.  If the unit test doesn't pass, then 
 you have uncovered the source of the issue and can investigate a fix. 
 
-The first unit test for the application will assert that the `TodoListView` renders the list name.
+The first unit tests for the application will assert that the `TodoListView` renders either the list name or the fallback message.
 
 
-Unit tests are added in the same directory as the the file they are testing.  Add a file alongside `TodoListView.jsx` named `TodoListView.test.jsx` with the following content:
+Unit tests are added in the same directory as the the file they are testing.  Add a file along side `TodoListView.jsx` named `TodoListView.test.jsx` with the following content:
 
 ```js
 import React from 'react';
@@ -391,10 +390,14 @@ describe("TodoListView", () => {
 
 ```
 
-This unit test uses an `expect ... to ... ` format common in behavior driven development.  
+The test above reads 
+> TodoListView should display 'No List Selected' if a list is not provided.
 
-The code is intended to read in close to natural english.  The test above reads "*TodoListView should display 'No List Selected' if a list is not provided*". 
-And within the test it reads, "*expect `screen.getByText("No List Selected")` to be truthy.*"  
+And within the test it reads, 
+> expect `screen.getByText("No List Selected")` to be truthy.  
+
+This `describe ... it ...` and `expect ... to ... ` syntax is common in behavior driven development.  
+
 
 Run `npm run test` and the vitest runner will launch and should pass.  
 
@@ -423,11 +426,14 @@ If you keep the unit tests short and simple, it will be easy to build a habit of
 
 ## Summary 
 
+Commit your code, and either checkout or diff your branch with the `chapter4-solution` branch.  
+
 This chapter introduced:
 
-* The Vite frontend toolchain and React.  
-* A general purpose application folder structure is presented.
+* The Vite frontend toolchain and React
+* A general purpose application folder structure
+* A common JSX syntax that uses the `&&` operator
 * A mechanism for embedding an application in a layout using `props.children`
-* Unit Testing 
+* Basic Unit Testing 
 
 ## References

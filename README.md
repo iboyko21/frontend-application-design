@@ -21,7 +21,7 @@ applications, but an appreciation for the how and why behind those patterns.
 ## Part 2 - Using React
 [Chapter 4: Laying out a React/Typescript Application](chapter4/README.md)
 
-[Chapter 5: Start With a Well Tested Data Model](chapter5/README.md)
+[Chapter 5: Interfacing with the Backend](chapter5/README.md)
 
 [Chapter 6: Building Views with Material UI](chapter6/README.md)
 
