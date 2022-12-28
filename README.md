@@ -1,10 +1,12 @@
 # Frontend Application Design Course
 
+> Author: Joshua Shapiro , https://github.com/SliceSoftware
+
 The objective of this course is to introduce new developers to the technologies and techniques for building and 
 deploying a modern single page web application from the ground up.  The course focuses heavily on software engineering 
 principles using modern frameworks as enablers rather than crutches.  
 
-Chapters 1 through 3 introduce core concepts of application frameworks but without the frameworks. Once the foundations are laid, chapters 4 through 8 
+Chapters 1 through 3 introduce core concepts of application frameworks but without the frameworks. Once the foundations are laid, chapters 4 through 9 
 rebuild the application in a Model-View Pattern with React using Material UI.  Typescript and Unit Testing are introduced as critical elements of writing 
 high quality code. 
 
@@ -45,3 +47,27 @@ exercises within that chapter.  As the student progresses through the chapter th
 should commit their work to the branch.  At the conclusion of the chapter, the 
 student can checkout or diff against the chapter solution branch and study any 
 differences. 
+
+## License and Copyright
+
+Copyright (c) 2023 Slice Software
+
+**MIT License**
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
