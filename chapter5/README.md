@@ -19,6 +19,7 @@ Run `git checkout chapter5` now and we will get started.
 * [Typescript Generics](https://www.typescriptlang.org/docs/handbook/2/generics.html)
 * [nock]
 * [axios]
+* [`static` methods](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Classes/static)
 
 ## Instructions
 
@@ -27,18 +28,18 @@ Run `git checkout chapter5` now and we will get started.
 The `chapter5` branch includes a project named `todo-server`.  This is a simple server written in express that our frontend will communicate with via a REST api.  
 
 The `todo-server` has two types of data, a list and an item.  
-A list has the following properties:
+A *List* has the following properties:
 
 | property | type | description |
----------------------------------
+| -------- | ---- | ----------- |
 | id   | number | Unique id of list |
 | name | string | The list name |
 | items | array | Array of items |
 
-An Item has the following properties:
+An *Item* has the following properties:
 
 | property | type | description |
----------------------------------
+| -------- | ---- | ----------- |
 | id   | number | Unique id of item |
 | text | string | the text to display | 
 | status | string | One of COMPLETE, INPROGRESS, INCOMPLETE |
@@ -46,10 +47,10 @@ An Item has the following properties:
 Any errors will be returned as an Error object
 
 | property | type | description |
----------------------------------
+| -------- | ---- | ----------- |
 | error | string | the error message |
 
-THe server defines the following endpoints. 
+The server defines the following endpoints. 
 
 #### Get Lists
 Retrieve all todo lists managed by the server
@@ -115,8 +116,8 @@ Add a new item to a list
 {"text": "Fruit", "id": 5, "status": "COMPLETE"}
 ```
 
-
-Start the server by running `node index.js` and try out a few of the endpoints using curl.
+Install the the node dependencies by running `npm install`, then
+start the server by running `node index.js` and try out a few of the endpoints using curl.
 
 > curl http://127.0.0.1:3000/lists 
 
@@ -145,12 +146,12 @@ Begin by defining a class `TodoItem`  as below.
 ```ts
 class TodoItem {
 
-    itemId : number | null = null;
+    id : number | null = null;
     complete : boolean = false; 
     text : string = ""; 
 
-    constructor({itemId, complete, text} : {itemId? : number, complete? : boolean, text? : string} = {}) {
-        if (itemId) this.itemId = itemId;
+    constructor({id, complete, text} : {id? : number, complete? : boolean, text? : string} = {}) {
+        if (id) this.id = id;
         if (complete) this.complete = complete;
         if (text) this.text = text;
     }
@@ -163,17 +164,17 @@ class TodoItem {
 export default TodoItem;
 ```
 
-The `TodoItem` class has three instance properties: `itemId`, `complete`, and `text`. 
-`itemId` can potentially be null because this values is assigned by the backend.  When the
-frontend creates an item prior to sending it to the backend, then the `itemId` is undefined. 
-The other two properties have default *falsy* values.  
+The `TodoItem` class has three instance properties: `id`, `complete`, and `text`. 
+`id` can potentially be null because this value is assigned by the backend.  When the
+frontend creates an item prior to sending it to the backend, then the `id` is undefined. 
+The other two properties also have default *falsy* values.  
 
 The signature of the constructor appears a bit intimidating, but it makes sense when it breaks down into three parts - (*argument* : *type declaration* = *default value*).
 
-The argument uses destructuring assignment to assign values to three variables: `itemId`, `complete`, and `text`.  The type declaration specifies the type of each property, and any property with a question mark is permitted to be undefined.  Finally the default value is 
+The argument uses destructuring assignment to assign values to three variables: `id`, `complete`, and `text`.  The type declaration specifies the type of each property, and any property with a question mark is permitted to be undefined.  Finally the default value is 
 an empty object, so each property will assume the default value declared above the constructor.  
 
-This pattern for defining a `TodoItem` allows the object to be initialized either with a 
+This pattern for defining a `TodoItem` allows the object to be initialized with no arguments, resulting in default values, a 
 generic object, or with another instance of a `TodoItem`.  
 
 We need to prove that the object can be initialized by writing some unit tests.  
@@ -181,10 +182,10 @@ We need to prove that the object can be initialized by writing some unit tests.
 Write unit tests for the following scenarios: 
 * A TodoItem should initialize with default values
   * expect `item.complete` to be `false`
-  * expect `item.text` to be equal `""`
+  * expect `item.text` to be equal to `""`
 * A TodoItem should initialize with specified values
   * expect `item.complete` to be `true`
-  * expect `item.text` to be `Do Laundry`
+  * expect `item.text` to be equal to `Do Laundry`
   * expect `item.id` to be 5
 * A TodoItem should initialize with another TodoItem
   * expect `item.complete` to equal `otherItem.complete`
@@ -235,7 +236,7 @@ describe("A TodoItem", () => {
 })
 ```
 
-Now create a data model for `TodoList` using the same pattern.  `TodoList` also has three properties: an `id` of type `number`, a `name` of type `string`, and `items` of type `TodoItem[]`.  
+Now create a data model for `TodoList` using the same pattern.  `TodoList` also has three properties: a `id` of type `number`, a `name` of type `string`, and `items` of type `TodoItem[]`.  
 
 Write a similar unit test for `TodoList`.  
 
@@ -251,10 +252,10 @@ Create a new file `api/TodoApi.ts` that exports an object, and import `TodoItem`
 Also, define a constant `BASE_API_URL` equal to `http://127.0.0.1:3000` which is the server and port where the backend server is running.
 
 ```ts
-const BASE_API_URL = "http://127.0.0.1:3000";
-
 import TodoItem from '../models/TodoItem';
 import TodoList from '../models/TodoList';
+
+export const BASE_API_URL = "http://127.0.0.1:3000";
 
 const TodoApi = {}
 
@@ -265,10 +266,10 @@ export default TodoApi
 
 The first endpoint we will tackle is the endpoint to fetch a single list with items.
 
-The `TodoApi` object will define a method `getList` that takes a list `id` as an argument
-and returns a `TodoList` object.  
+The `TodoApi` object will define a method `getList` that take  `listId` as an argument
+and return a `TodoList` object.  
 
-Setup a unit test `api/TodoApi.test.ts` file with a test *"The TodoApi should convert /lists/:listId into a TodoList"*.  The second argument to `it` (the function) will need to be declared as `async` because `TodoApi` is going to use asynchronous functions when fetching data from the server.  
+Setup a unit test `api/TodoApi.test.ts` file with a test *"The TodoApi getList function should return a TodoList"*.  The second argument to `it` (the test function) will need to be declared as `async` because `TodoApi` is going to use asynchronous functions when fetching data from the server.  
 
 There is a useful library named `nock` which we will use to emulate the server.  Install nock with the command `npm add -D nock` 
 
@@ -294,9 +295,9 @@ Finally create an assertion that the return value from `TodoApi.getList(1)` has 
 
 ```js
 const list : TodoList = await TodoApi.getList(1);
-expect(list.name).toEqual(reply.name);
-expect(list.id).toEqual(reply.id);
 expect(list).toBeInstanceOf(TodoList);
+expect(list.name).toEqual(reply.name);
+expect(list.listId).toEqual(reply.id);
 ```
 
 Run `npm run test` and the unit test will fail.  This is because we did not define `TodoApi.getList`.  This is how **Test Driven Development** works.  Write the test first, and then write the code to pass the test.   
@@ -313,7 +314,7 @@ const axiosInstance = axios.create({baseURL: API_BASE_URL})
 
 ### Write TodoApi.getList()
 
-Now create a property in the `TodoApi` object named `getList` that is a function that takes a number representing the list id and returns a `Promise` which resolves to a `TodoList`. In Typescript this is done by using the format `Promise<TodoApi>`, where `<T>` is called a *generic* and the `T` is replaced by the type of object the promise returns.    
+Create a property in the `TodoApi` object named `getList` that is a function that takes a number representing the list id and returns a `Promise` which resolves to a `TodoList`. In Typescript this is done by using the format `Promise<TodoApi>`, where `<T>` is called a *generic* and the `T` is replaced by the type of object the promise returns.    
 
 ```js
     getList: (listid : number) : Promise<TodoList> => axiosInstance.get(`/lists/${listid}`, {method: 'GET'}).then(r => r.data),
@@ -338,9 +339,9 @@ The test should pass now.
 The existing unit test successfully exercises the conversion of data into a TodoList, 
 but the test does not exercise the ability to create a list with items.  
 
-Create another test for *The TodoApi should converts items within a list to TodoItem objects*
+Create another test for *"The TodoApi getList function should return a TodoList with TodoItem objects"*
 
-This test will be very similar, but the reply should include TodoItem data from as defined above.  Use the following data for the reply: 
+This test will be very similar, but the reply should include TodoItem data as [defined above](#study-the-backend-service).  Use the following data for the reply: 
 
 ```js
 const reply = {"name": "list1", "id": 1, "items": [
@@ -349,10 +350,13 @@ const reply = {"name": "list1", "id": 1, "items": [
     ]}
 ```
 
-And then assert the following:
+And then assert:
 
 ```js
+    /* Check that the converted items length is the same length as the reply */ 
     expect(list.items.length).toEqual(reply.items.length);
+    
+    /* Loop over items and validate each item */
     for (let i = 0; i < list.items.length; i++) {
         expect(list.items[i]).toBeInstanceOf(TodoItem);
         expect(list.items[i].id).toEqual(reply.items[i].id);
@@ -374,7 +378,11 @@ This test will fail because `items` is not an array of `TodoItem` objects.  In o
 
 ### Add `static fromServerObject()` functions to `TodoList` and `TodoItem`.
 
-Create a new file in the `api` directory called `TodoApi.d.ts`.  A file with the extensions `.d.ts` is a typescript type declaration file.  It defines object interfaces, but not their implementations.  Add the following interface declarations inside `TodoApi.d.ts`.
+Create a new file in the `api` directory called `TodoApi.d.ts`.  A file with the extension `.d.ts` is a typescript type declaration file.  It defines object interfaces, but not their implementations.  
+
+Create declarations for the external data model provided by the server.  The declarations must match the data model described by the server documentation.  Make it clear these are external declarations by prefacing the names with `EXT`
+
+Add the following interface declarations inside `TodoApi.d.ts`.
 
 ```ts
 export interface EXT_TodoItem {
@@ -390,7 +398,7 @@ export interface EXT_TodoList {
 }
 ```
 
-Import the `EXT_TodoItem` typescript interface declaration into `TodoItem`, and add the following function that returns a new TodoItem but converst the `status` into a `complete` boolean.
+Import the `EXT_TodoItem` typescript interface declaration into `TodoItem`, and add the following function that takes an object of type `EXT_TodoItem` and returns a new `TodoItem`.  This function will need to convert the `status` into a `complete` boolean.
 
 ```js
 static fromServerObject({id, text, status} : EXT_TodoItem ) {
@@ -398,8 +406,10 @@ static fromServerObject({id, text, status} : EXT_TodoItem ) {
 }
 ```
 
-Add a unit test to `TodoItem` that tests *A TodoItem should convert a COMPLETE server object* and
-another unit test for *sA TodoItem hould convert an INCOMPLETE server object*
+Even though this function is very simple, and the conversion seems obvious, it is best practice to add unit tests to verify the conversion.  Frequently small errors in these simple functions are overlooked, and a unit test is a perfect way to test the code prior to commiting it. The new `TodoItem` tests should read *"A TodoItem should convert a COMPLETE server object into a TodoItem"* and
+another unit test for *"A TodoItem hould convert an INCOMPLETE server object into a TodoItem"*
+
+A `TodoList` likewise needs a `static fromServerObject()` method that converts an `EXT_TodoList` into a `TodoList`.  This is because a `TodoList` has an array of `TodoItem` objects.  
 
 Import the `EXT_TodoList` typescript interface declaration into `TodoList` and add a static `fromServerObject` function that maps the `items` array into a list of `TodoItem` objects as follows:
 
@@ -409,6 +419,38 @@ static fromServerObject({id, name, items} : EXT_TodoList) : TodoList {
 }
 ```
 
+Add a unit test to validate the conversion.
+
+### Adding Items
+
+Adding new TodoItems requires a `post` to the `/lists/:listId/items` endpoint.  Create a new unit test *"The TodoApi addItem function should call the addItem endopint and return a TodoItem"*. 
+
+This unit test will mock the server using the following code:
+
+```js
+const newItemRequest = {text: "New Item"}
+const newItemResponse = {text: "New Item", id: 1,  status: "INCOMPLETE"}
+        
+scope.post("/lists/1/items", newItemRequest).reply(201, newItemResponse);
+```
+
+We assume `TodoApi.addItem` function exists, and that it takes a string with the id of the 
+list and the text of the new item as an argument, and returns the new TodoItem.  
+
+```js
+const response = await TodoApi.addItem(1, "New Item");
+
+expect(response).toBeInstanceOf(TodoItem);
+expect(response.itemId).toEqual(newItemResponse.id);
+expect(response.text).toEqual(newItemResponse.text);
+expect(response.complete).toBeFalsy();
+```
+
+This test will not pass until the `addItem` function is defined.  So define it now. 
+
+```js
+
+```
 ### On Your Own
 
 * Create an implementation of `TodoApi.addItem()`
