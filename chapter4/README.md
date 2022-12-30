@@ -423,6 +423,17 @@ describe("TodoListView", () => {
 
 If you keep the unit tests short and simple, it will be easy to build a habit of writing unit tests as your application grows. 
 
+### Render a List
+
+Within TodoApp, creatte a new list and replace the "My Todo App" with a `<TodoListView>` component 
+
+```js
+    return (
+        <MainLayout>
+            <TodoListView list={{name: "Grocery List}}/>
+        </MainLayout>
+```
+
 
 ## Summary 
 
