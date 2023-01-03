@@ -56,7 +56,7 @@ Our HTML Element will be a `<div>` element that has
 text that greets a superhero.  Create a file `src/HelloSuperhero.js`
 with the following contents:
 
-``` 
+```js
 export default function HelloSuperhero(name) {
     const element = document.createElement("div");
     element.innerHTML = `Hello ${name}`;
@@ -64,9 +64,9 @@ export default function HelloSuperhero(name) {
 }
 ```
 
-Now create a file `index.js` with the following contents:
+Now create a file `src/index.js` with the following contents:
 
-```
+```js
 import HelloSuperhero from './HelloSuperhero';
 
 document.body.appendChild(HelloSuperhero("Batman"));
@@ -90,7 +90,7 @@ Webpack also supports plugins that can do fancy things like compile css, embed i
 
 In order to direct webpack to do these fancy things, we need a `webpack.config.js` file.  Go ahead and create this file in the project root directory (that is `./todo-list-project`) and add the following: 
 
-```
+```js
 const { mode } = require("webpack-nano/argv");
 
 module.exports  = {
@@ -120,7 +120,7 @@ npm add mini-html-webpack-plugin -D
 Check `package.json` to convince yourself the plugin was installed.
 
 Now update `webpack.config.js` as follows:
-```
+```js
 const { mode } = require("webpack-nano/argv");
 const {
   MiniHtmlWebpackPlugin,
@@ -167,7 +167,7 @@ npm add webpack-plugin-serve -D
 ```
 Now update `webpack.config.js` to configure the plugin:
 1) Require the module
-```
+```js
 const { WebpackPluginServe } = require("webpack-plugin-serve");
 ```
 2) Add the plugin to the `plugins` array. 
@@ -192,6 +192,33 @@ const { WebpackPluginServe } = require("webpack-plugin-serve");
 
 When you are complete, your `webpack.config.js` should look like this:
 
+```json
+const { mode } = require("webpack-nano/argv");
+const {
+    MiniHtmlWebpackPlugin,
+} = require("mini-html-webpack-plugin");
+const {WebpackPluginServe} = require("webpack-plugin-serve");
+
+module.exports = {
+    mode,
+    entry: ["./src", "webpack-plugin-serve/client"],
+    watch: mode === "development",
+    plugins: [
+        new MiniHtmlWebpackPlugin({
+            context: {
+                title: "Superhero Greeter"
+            }
+        }),
+        new WebpackPluginServe({
+            port: parseInt(process.env.PORT, 10) || 8080,
+            static: "./dist",
+            liveReload: true,
+            waitForBuild: true,
+        }),
+    ]
+}
+```
+
 Finally, add a shortcut to `package.json` so that you can launch the development server with the command `npm run start`.  Add the following to the `scripts` array in `package.json`
 ```
 "start": "wp --mode development"
@@ -213,6 +240,8 @@ git commit -m "Finished Chapter 1"
 
 In this chapter we initialized a node application and configured
 a bare-bones webpack application from scratch. We then configured the webpack development server so that changes to our source code will be immediately rebuilt.  
+
+Run `git checkout chapter1-solution` to see what the solution looks like.   
 
 ## References
 This tutorial was heavily influenced by the excellent work at https://survivejs.com.  I *strongly* recommend this resource.

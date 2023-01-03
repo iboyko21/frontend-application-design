@@ -6,7 +6,7 @@ The objective of this course is to introduce new developers to the technologies 
 deploying a modern single page web application from the ground up.  The course focuses heavily on software engineering 
 principles using modern frameworks as enablers rather than crutches.  
 
-Chapters 1 through 3 introduce core concepts of application frameworks but without the frameworks. Once the foundations are laid, chapters 4 through 9 
+Chapters 1 through 3 introduce core concepts of application frameworks but without the frameworks. Once the foundations are laid, chapters 4 through 8 
 rebuild the application in a Model-View Pattern with React using Material UI.  Typescript and Unit Testing are introduced as critical elements of writing 
 high quality code. 
 
