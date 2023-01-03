@@ -27,11 +27,9 @@ applications, but an appreciation for the how and why behind those patterns.
 
 [Chapter 6: Building Views with Material UI](chapter6/README.md)
 
-[Chapter 7: useState and useEffect - The primary hooks for triggering updates](chapter7/README.md)
+[Chapter 7: Routing and Error Boundaries](chapter8/README.md)
 
-[Chapter 8: Routing and Error Boundaries](chapter8/README.md)
-
-[Chapter 9: Manipulating Deep State with Context and Reducers ](chapter9/README.md)
+[Chapter 8: Manipulating Deep State with Context and Reducers ](chapter9/README.md)
 
 
 

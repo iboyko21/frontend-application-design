@@ -344,9 +344,9 @@ Create another test for *"The TodoApi getList function should return a TodoList 
 This test will be very similar, but the reply should include TodoItem data as [defined above](#study-the-backend-service).  Use the following data for the reply: 
 
 ```js
-const reply = {"name": "list1", "id": 1, "items": [
-        {"text": "Item number 1", "id": 1, "status": "INCOMPLETE"}, 
-        {"text": "Item number 2", "id": 2, "status": "COMPLETE"}
+const reply = {"name": "list1", "id": 0, "items": [
+        {"text": "Item number 1", "id": 0, "status": "INCOMPLETE"}, 
+        {"text": "Item number 2", "id": 1, "status": "COMPLETE"}
     ]}
 ```
 
@@ -369,10 +369,9 @@ And then assert:
     }
 ```
 
-Not only does this assert that each item in the reply is a `TodoItem` object, it
-checks each property for equality.  
+Not only does this assert that each item in the reply is a `TodoItem` object, it checks each property for equality.  
 
-There is also a little curve ball in here.  The server returns a `status` string, but the `TodoItem` defines a `complete` property that is a boolean.  It is not uncommon for the frontend application to perform small transformations on data from the *external interface* to meet the needs of the application. 
+There are a few curve balls in here.  First, recall that '0' is a falsy value, so the constructor must explicitly check that the`id` property of TodoList and TodoItem is not `null`. Second, the server returns a `status` string, but the `TodoItem` defines a `complete` property that is a boolean.  It is not uncommon for the frontend application to perform small transformations on data from the *external interface* to meet the needs of the application. 
 
 This test will fail because `items` is not an array of `TodoItem` objects.  In order for it to pass, there must be a method to convert data returned by the server into a `TodoItem`.  
 
@@ -446,17 +445,26 @@ expect(response.text).toEqual(newItemResponse.text);
 expect(response.complete).toBeFalsy();
 ```
 
-This test will not pass until the `addItem` function is defined.  So define it now. 
+This test will not pass until the `addItem` function is defined.  So define it in `TodoApi` now. 
 
 ```js
-
+    addItem: (listId : number , itemText : string) : Promise<TodoItem> => {
+        return axiosInstance.post(`/lists/${listId}/items`, {text: itemText})
+            .then(r => TodoItem.fromServerObject(r.data))
+    },
 ```
+
+At this point the test should pass, and we can fetch a list and add an item.  
+
 ### On Your Own
 
-* Create an implementation of `TodoApi.addItem()`
-* Create an implementation of `TodoApi.updateItem()`
+Commit your code, then on your own create tests and implementations for 
 
+* `TodoApi.updateItem()`
+* `TodoApi.getAllLists()`
+* `TodoApi.addList()`
 
+Compare your implementation with the  `chapter5-solution` branch.
 
 ## Summary
 
