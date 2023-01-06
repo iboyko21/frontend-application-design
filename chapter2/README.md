@@ -28,12 +28,14 @@ To illustrate the Virtual DOM, this chapter will guide you through the creation 
 ## Instructions
 
 ### Setup
-Checkout the `chapter-2` branch of this repository. 
-```bash
-git checkout chapter-2
+Checkout the `chapter2` branch of this repository. 
+```sh
+git checkout chapter2
 ```
 
 This command will replace the contents of `todo-list-project` with a completed and working `webpack.config.js` and `package.json` file.  
+
+The source repository does not store dependencies, so run `npm install` to ensure the dependencies are consistent.
 
 ### Create a TodoListItem Component
 
@@ -60,14 +62,14 @@ status and the text to a `<div>` element and returns that.  Notice that
 the completed status and the text are passed to the function as an object 
 named `item`.  
 
-Go ahead and add a few `TodoListItem` components to the page. 
+Go ahead and add a few `TodoListItem` components to `index.js`. 
 
 ```javascript
 document.body.appendChild(TodoListItem({complete: true, text: "This is complete"}));
 document.body.appendChild(TodoListItem({complete: false, text: "This is not complete"}));
 ```
 
-Start the development server and view the page.  As you can see below, it is not very interesting.
+Start the development server and view the page.  As you can see in the screenshot below, it is not very interesting.
 
 ![screenshot-1](images/page-screenshot-1.png)
 
@@ -152,17 +154,15 @@ const todoItems = [
 document.body.appendChild(TodoList(todoItems));
 ```
 
-Wonderful! At this point your application should look something like the screenshot below.
-
-![screenshot-3](images/page-screenshot-3.png)
+Nothing changed visually, but we have taken one more step towards modularity.
 
 ### Adding New Todo Items
 
 Have a look back at the [first user story](#user-story-1).  We need a component that will be responsible for adding todo items.  
 
-Create a new file `src/TodoListItemCreator.js` that returns a n input element such as `<input type="text" maxlength="50" size="50" placeholder="What do you need to do?">` and add it to the document body above the `TodoList`.  Does your application look like this?
+Create a new file `src/TodoListItemCreator.js` that returns an input element such as `<input type="text" maxlength="50" size="50" placeholder="What do you need to do?">`. You will want to make use of the `setAttribute` method of an `HTMLElement`.  Add a `TodoListItemCreator` to the document body above the `TodoList`.  Does your application look like this?
 
-![screenshot-4](images/page-screenshot-4.png)
+![screenshot-3](images/page-screenshot-3.png)
 
 Great! 
 
@@ -324,13 +324,15 @@ const addItem = (text) => {
     VDOM.refresh();
 }
 
-export function TodoApp() {
+function TodoApp() {
     const div = document.createElement('div');
     div.appendChild(ToDoListItemCreator(addItem));
     div.appendChild(TodoList(todoItems));
 
     return div;
 }
+
+export default TodoApp;
 ```
 
 This minor refactoring only introduced one real new line of code, `VDOM.refresh()`.  Recall that 
@@ -347,7 +349,7 @@ mounts `TodoApp` at `root`.
 
 ```javascript
 import { VDOM } from './VirtualDom';
-import { TodoApp } from './TodoApp';
+import TodoApp from './TodoApp';
 
 document.body.innerHTML = `<div id="root"></div>`;
 VDOM.mount('root', TodoApp);
