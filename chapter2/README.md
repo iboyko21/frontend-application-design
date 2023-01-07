@@ -566,7 +566,8 @@ const list = v('ul', {style: 'list-style-type: circle'});
 ['apple', 'banana', 'mango'].forEach(item => list.add(v('li').add(item)))
 ```
 
-The solution to this function is included in the `chapter3` branch.
+The solution to this function is included in the `chapter3` branch. Compare this function with 
+[`React.createElement()`](https://reactjs.org/docs/react-api.html#createelement).
 
 ## References
 
