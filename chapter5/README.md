@@ -6,7 +6,7 @@ as a backend.  The frontend and the backend traditionally are two completely sep
 External Interfaces require attention and active management, and generally should not be trusted.  An external interface can express unexpected or unpredictable behaviors and may change 
 without warning.  
 
-While not strictly necessary, it is a safe practice to engineer an adapter or bridge at the external interface that performs data validation, error handling, and has a comprehensive unit test suite.  The addapter translates data arriving over the external interface into a trusted internal data model that may be utilized throughout the application without fear of unexpected changes.  If the external interface does change unexpectedly, the adapter prevents those changes from infecting the frontend and causing unintended side effects.
+While not strictly necessary, it is a safe practice to engineer an adapter or bridge at the external interface that performs data validation, error handling, and has a comprehensive unit test suite.  The adapter translates data arriving over the external interface into a trusted internal data model that may be utilized throughout the application without fear of unexpected changes.  If the external interface does change unexpectedly, the adapter prevents those changes from infecting the frontend and causing unintended side effects.
 
 For this tutorial, we will include such an adapter so the student understands how these adapters are built.  Whether or not any individual project chooses to include an adapter layer depends on the priorities and concerns of the project management. 
 
@@ -15,10 +15,10 @@ This chapter will flesh out the code in the `api` and `models` directories, and 
 Run `git checkout chapter5` now and we will get started.
 
 ## Pre-Reading
-* [Typescript Basics](https://www.typescriptlang.org/docs/handbook/2/basic-types.html/)
+* [Typescript Basics](https://www.typescriptlang.org/docs/handbook/2/basic-types.html)
 * [Typescript Generics](https://www.typescriptlang.org/docs/handbook/2/generics.html)
-* [nock]
-* [axios]
+* [nock](https://github.com/nock/nock)
+* [axios](https://axios-http.com/)
 * [`static` methods](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Classes/static)
 
 ## Instructions
@@ -117,14 +117,12 @@ Add a new item to a list
 ```
 
 Install the the node dependencies by running `npm install`, then
-start the server by running `node index.js` and try out a few of the endpoints using curl.
+start the server by running `node index.js` and try out a few of the endpoints using your browser.
 
-> curl http://127.0.0.1:3000/lists 
+* http://127.0.0.1:3000/lists 
+* http://127.0.0.1:3000/lists/0
 
-or 
-
-> curl http://127.0.0.1:3000/lists/0
-
+The todo-server backend is preloaded with a grocery list with two items.
 
 ### Create the Data Models
 
@@ -139,14 +137,14 @@ sure each element of data is precisely what we expect it to be.  Unexpected `und
 values or `nulls`, or using a `string` instead of `Date` can have a disastrous impact
 on the application.
 
-Create two files `src/models/TodoList.ts` and `src/models/TodoItem.ts`
+Create two files in the `react-todo` application: `src/models/TodoList.ts` and `src/models/TodoItem.ts`
 
 Begin by defining a class `TodoItem`  as below.
 
 ```ts
 class TodoItem {
 
-    id : number | null = null;
+    id : number | undefined;
     complete : boolean = false; 
     text : string = ""; 
 
@@ -165,9 +163,7 @@ export default TodoItem;
 ```
 
 The `TodoItem` class has three instance properties: `id`, `complete`, and `text`. 
-`id` can potentially be null because this value is assigned by the backend.  When the
-frontend creates an item prior to sending it to the backend, then the `id` is undefined. 
-The other two properties also have default *falsy* values.  
+`id` can potentially be undefined because this value is assigned by the backend.  When the frontend creates an item prior to sending it to the backend, then the `id` is undefined. The other two properties also have default *falsy* values.  
 
 The signature of the constructor appears a bit intimidating, but it makes sense when it breaks down into three parts - (*argument* : *type declaration* = *default value*).
 
@@ -208,31 +204,25 @@ describe("A TodoItem", () => {
     it("should initialize with specified values", () => {
         const complete = true; 
         const text = "Eat dinner";
-        const item = new TodoItem({complete, text});
+        const id = 5;
+        const item = new TodoItem({id, complete, text});
         expect(item.complete).toBe(complete);
         expect(item.text).toEqual(text);
+        expect(item.id).toEqual(id);
     })
 
     it("should initialize with another TodoItem", () => {
         const complete = true; 
         const text = "Eat dinner";
-        const item = new TodoItem({complete, text});
+        const id = 2;
+        const item = new TodoItem({id, complete, text});
         const item1 = new TodoItem(item);
 
         expect(item1.complete).toEqual(item.complete);
         expect(item1.text).toEqual(item.text);
+        expect(item1.id).toEqual(item.id);
     })
 
-    it("should toggle complete", () => {
-        const item = new TodoItem({text: "Eat Dinner"});
-        expect(item.complete).toBe(false);
-
-        item.toggleComplete();
-        expect(item.complete).toBe(true);
-        
-        item.toggleComplete();
-        expect(item.complete).toBe(false);
-    })
 })
 ```
 
@@ -248,7 +238,7 @@ backend and return the data models.
 
 It is convenient to localize all the code that communicates with a backend in a single object.
 
-Create a new file `api/TodoApi.ts` that exports an object, and import `TodoItem` and `TodoList`.
+Create a new file `api/TodoApi.ts` that exports an object named `TodoApi`. It will need to import `TodoItem` and `TodoList`.
 Also, define a constant `BASE_API_URL` equal to `http://127.0.0.1:3000` which is the server and port where the backend server is running.
 
 ```ts
@@ -284,12 +274,15 @@ const scope = nock(API_BASE_URL).defaultReplyHeaders({
     'access-control-allow-credentials': 'true' 
   });
 ```
-The variable `scope` is an instance of nock that is configured to capture requests to `API_BASE_URL`. Now, in the body of the test, mock the server response as follows:
+The variable `scope` is an instance of nock that is configured to capture requests to `API_BASE_URL`.  The default reply headers are required because the server is emulating an API server which includes specific headers to permit cross origin resource sharing[^1].
+
+Now, in the body of the test, mock the server response as follows:
 
 ```js
-reply = {id: 1, name: "Test List 1", items: []};
+const reply = {id: 1, name: "Test List 1", items: []};
 scope.get("/lists/1").reply(200, reply);
 ```
+This command instructs nocks to send the `reply` with a http status code of 200 when it receives a request at `http://127.0.0.1:3000/lists/1`
 
 Finally create an assertion that the return value from `TodoApi.getList(1)` has the expected id and the name, and that it is an instance of a `TodoList` as follows:
 
@@ -297,7 +290,8 @@ Finally create an assertion that the return value from `TodoApi.getList(1)` has 
 const list : TodoList = await TodoApi.getList(1);
 expect(list).toBeInstanceOf(TodoList);
 expect(list.name).toEqual(reply.name);
-expect(list.listId).toEqual(reply.id);
+expect(list.id).toEqual(reply.id);
+expect(list.items).toEqual(reply.items);
 ```
 
 Run `npm run test` and the unit test will fail.  This is because we did not define `TodoApi.getList`.  This is how **Test Driven Development** works.  Write the test first, and then write the code to pass the test.   
@@ -317,7 +311,10 @@ const axiosInstance = axios.create({baseURL: API_BASE_URL})
 Create a property in the `TodoApi` object named `getList` that is a function that takes a number representing the list id and returns a `Promise` which resolves to a `TodoList`. In Typescript this is done by using the format `Promise<TodoApi>`, where `<T>` is called a *generic* and the `T` is replaced by the type of object the promise returns.    
 
 ```js
-    getList: (listid : number) : Promise<TodoList> => axiosInstance.get(`/lists/${listid}`, {method: 'GET'}).then(r => r.data),
+    getList: async (listId : number) : Promise<TodoList> => {
+       const response = await axiosInstance.get(`/lists/${listId}`);
+       return response.data;
+    }
 ```
 
 Start the vitest runner with `npm run test`.  The test should fail with the following error:
@@ -328,7 +325,10 @@ While the data are correct, the object is not an instance of a TodoList.
 Change `TodoApi.getList` to return a new instance of a TodoList using the `data` from the axios response.  
 
 ```js
-   getList: (listid : number) : Promise<TodoList> => axiosInstance.get(`/lists/${listid}`, {method: 'GET'}).then(r => new TodoList(r.data)),
+    getList: async (listId : number) : Promise<TodoList> => {
+       const response = await axiosInstance.get(`/lists/${listId}`);
+       return new TodoList(response.data);
+    }
 ```
 
 The test should pass now.  
@@ -350,7 +350,7 @@ const reply = {"name": "list1", "id": 0, "items": [
     ]}
 ```
 
-And then assert:
+Within the unit test call `TodoApi.getList(0)` and then assert:
 
 ```js
     /* Check that the converted items length is the same length as the reply */ 
@@ -385,28 +385,47 @@ Add the following interface declarations inside `TodoApi.d.ts`.
 
 ```ts
 export interface EXT_TodoItem {
-    id : number;
+    id? : number;  // The payload to update item does not require an id
     text : string;    
     status : "INCOMPLETE" | "INPROGRESS" | "COMPLETE";
 }
 
 export interface EXT_TodoList {
-    id? : number; 
+    id : number; 
     name : string;
-    items : EXT_TodoItem[];
+    items? : EXT_TodoItem[]; // The response to /lists only includes name
 }
 ```
 
-Import the `EXT_TodoItem` typescript interface declaration into `TodoItem`, and add the following function that takes an object of type `EXT_TodoItem` and returns a new `TodoItem`.  This function will need to convert the `status` into a `complete` boolean.
+Import the `EXT_TodoItem` typescript interface declaration into `TodoItem`, and add the following static function that takes an object of type `EXT_TodoItem` and returns a new `TodoItem`.  This function will need to convert the `status` into a `complete` boolean.  
+
+A static function is a function that is only available on the class object itself, not on an instance of the class.  Static functions are typically used sparingly and only when every instance of a class must be impacted, or to initialize instances in special situations as here. 
 
 ```js
 static fromServerObject({id, text, status} : EXT_TodoItem ) {
-    return new TodoItem ({itemId: id, text, complete: status == "COMPLETE"});
+    return new TodoItem ({id, text, complete: status == "COMPLETE"});
 }
 ```
 
 Even though this function is very simple, and the conversion seems obvious, it is best practice to add unit tests to verify the conversion.  Frequently small errors in these simple functions are overlooked, and a unit test is a perfect way to test the code prior to commiting it. The new `TodoItem` tests should read *"A TodoItem should convert a COMPLETE server object into a TodoItem"* and
-another unit test for *"A TodoItem hould convert an INCOMPLETE server object into a TodoItem"*
+another unit test for *"A TodoItem hould convert an INCOMPLETE server object into a TodoItem"*.  For example:
+
+```js
+it("should convert a COMPLETE server object into a TodoItem", () => {
+    
+    const serverObject = {
+        id: 2,
+        status: "COMPLETE",
+        text: "Honey Badger"
+    } as EXT_TodoItem;
+
+    const item = TodoItem.fromServerObject(serverObject);
+    expect(item.id).toEqual(serverObject.id)
+    expect(item.text).toEqual(serverObject.text);
+    expect(item.complete).toBe(true);
+
+})
+```
 
 A `TodoList` likewise needs a `static fromServerObject()` method that converts an `EXT_TodoList` into a `TodoList`.  This is because a `TodoList` has an array of `TodoItem` objects.  
 
@@ -418,7 +437,9 @@ static fromServerObject({id, name, items} : EXT_TodoList) : TodoList {
 }
 ```
 
-Add a unit test to validate the conversion.
+Finally, in `TodoApi.ts`, instead of returning a `TodoList` initialized with `new`, change `getList()` to return `TodoList.fromServerObject(response.data)`
+
+At this point the tests will pass because the `TodoItem` has been properly converted from the data delivered by the server into a `TodoItem` that is tested and verified to work in our application.
 
 ### Adding Items
 
@@ -440,27 +461,67 @@ list and the text of the new item as an argument, and returns the new TodoItem.
 const response = await TodoApi.addItem(1, "New Item");
 
 expect(response).toBeInstanceOf(TodoItem);
-expect(response.itemId).toEqual(newItemResponse.id);
+expect(response.id).toEqual(newItemResponse.id);
 expect(response.text).toEqual(newItemResponse.text);
-expect(response.complete).toBeFalsy();
+expect(response.complete).toBe(false);
 ```
 
 This test will not pass until the `addItem` function is defined.  So define it in `TodoApi` now. 
 
 ```js
-    addItem: (listId : number , itemText : string) : Promise<TodoItem> => {
-        return axiosInstance.post(`/lists/${listId}/items`, {text: itemText})
-            .then(r => TodoItem.fromServerObject(r.data))
-    },
+    addItem: async (listId: number, itemText: string) : Promise<TodoItem> => {
+        const response = await axiosInstance.post(`/lists/${listId}/items`, {text: itemText});
+        return TodoItem.fromServerObject(response.data);
+    }
 ```
 
 At this point the test should pass, and we can fetch a list and add an item.  
+
+### Updating an Item
+
+Updating an item is similar to adding an item, however there is one important difference.  The `addItem` function crafted a payload that contained just the text of the item to create, because the default behavior is for the `status` of a new item to be INCOMPLETE.  
+
+When the application wants to update the status of an item, it needs to convert the internal boolean `complete` into a string `status` when building the payload.  
+
+Add an instance method to `TodoItem` called `toServerObject()`.  This method must pass the following unit tests:
+
+* *The toServerObject() method should convert a complete item to a valid EXT_TodoItem.*
+* *the toServerObject() method should convert an incomplete item to a valid EXT_TodoItem*
+
+
+Now add a new function to `TodoApi` called `updateItem` that takes a `listId` and a `TodoItem` as an argument.  It converts the item by calling `toServerObject()` and then posts the payload to `/lists/${listId}/items/${item.id}`.  In this case, an `id` property is required, so it is wise to check for its existsence and raise an error if it does not exist.  Unit test expectations can also test for promise rejections and errors[^2]. A unit test suite may then read as follows:
+
+* The TodoApi updateItem function should
+    * raise an error if the TodoItem does not have an id
+    * should call the updateItem endpoint and return a TodoItem
+
+```js
+describe("The TodoApi updateItem function", () => {
+    
+    it("should raise an error if the TodoItem does not have an id", async () => {
+        const updateItem = async () => TodoApi.updateItem(1 , new TodoItem({text: "No Id"}))
+        await expect(updateItem).rejects.toThrowError()
+    })
+
+    it("should call the updateItem endpoint and return a TodoItem", async () => {
+        const id = 1;
+        const text = "My Item";
+        const status = "COMPLETE"
+        const updateItemRequest = {id, text, status}
+        const updateItemResponse = {id, text, status}
+
+        scope.post("/lists/1/items/1", updateItemRequest).reply(200, updateItemResponse);
+
+        const response = await TodoApi.updateItem(1, new TodoItem({id, text, complete: true}))
+        expect(response).toBeInstanceOf(TodoItem);
+    })
+})
+```
 
 ### On Your Own
 
 Commit your code, then on your own create tests and implementations for 
 
-* `TodoApi.updateItem()`
 * `TodoApi.getAllLists()`
 * `TodoApi.addList()`
 
@@ -468,4 +529,21 @@ Compare your implementation with the  `chapter5-solution` branch.
 
 ## Summary
 
+In this chapter we introduced:
+
+* Unit Test Suites
+* Mocking external APIs with nock
+* Making API calls with Axios
+* Writing Data Models to provide an adapter layer at the external interface
+* Converting to and from external interface data representations
+
+This was perhaps the most complex and difficult chapter in the course, but this chapter reflects true software engineering better than any other chapter.  
+
+When writing code that sits at the interface of your system it is absolutely critical to examine every assumption and test every corner case.  Use all the tools at your disposal to ensure every piece of data and every method has a well defined behavior.  
+
+
 ## References
+
+[^1]: [Cross Origin Resource Sharing (CORS)](https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS)
+
+[^2]: https://vitest.dev/api/#rejects
