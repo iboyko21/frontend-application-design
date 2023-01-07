@@ -17,11 +17,9 @@ when.  The Fabric is tightily integrated with several `hooks`, and together thes
 the developer fine grained control over what triggers a re-render of
 the application.  
 
-Part 2 explores building an application in React and presents 
-useful patterns and guidelines for how to structure the 
-application.  
-
-Moving forward we will use all the modern conveniences.  Specifically
+Now the course shifts gears to building an application in React.  The following chapters present
+useful patterns and guidelines for how to structure an application.  
+From here on we will use all the modern conveniences.  Specifically
 we will utilize a toolchain called **Vite** to scaffold our application, and a component 
 library called Material UI.
 
@@ -37,7 +35,7 @@ library called Material UI.
 
 ### Scaffold a new Vite application
 
-Scaffold a new application using **vite** and the `react-ts` template.  
+Scaffold a new application using **Vite** and the `react-ts` template.  
 
 ```
 npm create vite@latest react-todo -- --template react-ts
@@ -59,24 +57,25 @@ Have a look at the contents of the newly created `react-todo` directory.
 The contents are a bit different, but it should feel familiar.  There is a `package.json` 
 that declares the project's dependencies.  It also defines the commands we can invoke 
 with `npm run`.  In this case **vite** preinstalls commmands for `dev`, `build`, and `preview`.
-In this case `dev` will run the development server which will refresh as you edit files, 
-`build` will build the production code, and `preview` will build the production code but 
-preview it in the local browser.   
+* `dev` will run the development server which will refresh as you edit files
+* `build` will build the production code
+* `preview` will preview the output of build in the local browser.   
 
-There is also an `index.html` with the following contents:
+There is also an `index.html` with the following fragment:
 
 ```html
+...
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
-  ```
+...
+```
 
   It is defining a root element and loading `/src/main.tsx`, which is also 
-  quite familiar.  
+  quite familiar.  Within `main.tsx` you will find:
 
   ```js
-  # index.tsx
   ...
   ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
   <React.StrictMode>
@@ -111,7 +110,7 @@ const TodoApp = () => {
 export default TodoApp;
 ```
 
-Now rename `main.tsx` to `main.jsx` and modify it to use the new `TodoApp` component instead of `App`. 
+Now rename `main.tsx` to `main.jsx` and modify it to use the new `TodoApp` component instead of `App`.  Don't forget to update the script tag in `index.html` with the new name for `main.jsx`.
 
 ```js
 ...
@@ -120,7 +119,7 @@ import TodoApp from './TodoApp';
 
 ...
 
-ReactDOM.createRoot(document.getElementById('root') as HTMLElement).render(
+ReactDOM.createRoot(document.getElementById('root') /* as HTMLElement */).render(
   <React.StrictMode>
     <TodoApp />
   </React.StrictMode>,
@@ -192,11 +191,9 @@ export default MainLayout;
 ```
 
 This layout renders a `Header` and a `Footer`, and in between in creates an html5 `<main>` element and populates it 
-with the contents of `props.children`.  `children` is a special property that is present on all React nodes. 
-It contains whatever content is present between the start and end tags of the calling component.  
+with the contents of `props.children`.  `children` is a special property that is present on all React nodes. It contains whatever content is present between the start and end tags of the calling component.  
 
-Now populate `Header.jsx` with a brightly colored `Div` element so that it is very obvious as you debug the layout.  
-You can change the styling later, but it is helpful to make new elements stand out when they are first introduced
+Now populate `Header.jsx` with a brightly colored `Div` element so that it is very obvious as you debug the layout.  You can change the styling later, but it is helpful to make new elements stand out when they are first introduced
 into the DOM.  
 
 ```js
@@ -423,17 +420,6 @@ describe("TodoListView", () => {
 
 If you keep the unit tests short and simple, it will be easy to build a habit of writing unit tests as your application grows. 
 
-### Render a List
-
-Within TodoApp, creatte a new list and replace the "My Todo App" with a `<TodoListView>` component 
-
-```js
-    return (
-        <MainLayout>
-            <TodoListView list={{name: "Grocery List}}/>
-        </MainLayout>
-```
-
 
 ## Summary 
 
@@ -447,4 +433,3 @@ This chapter introduced:
 * A mechanism for embedding an application in a layout using `props.children`
 * Basic Unit Testing 
 
-## References
