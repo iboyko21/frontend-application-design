@@ -35,7 +35,8 @@ look and feel.
 
 ```sh
 > cd react-todo
-> npm install @mui/material  @mui/icons-material @emotion/styled
+> npm add @mui/material  @mui/icons-material @emotion/styled
+> npm install
 ```
 ### Start the Dev Server and Backend Server 
 
@@ -55,7 +56,7 @@ _ npm run start
 
 ### Update the Header
 
-The header uses the following Material componnets
+Replace the application header with an component that can host a menu, a brand, and an avatar.  In Material UI, this is called an `AppBar`.  Additionally, the header will make use of a `Toolbar` component and a `Typography` component.  Review the documentation for these components at the links below.
 
 * [AppBar](https://mui.com/material-ui/react-app-bar/)
 * [Toolbar](https://mui.com/material-ui/api/toolbar/)
@@ -83,10 +84,6 @@ a `Typography` component over native HTML tags is the `Typography` component sup
 material UI system properties such as `sx`
 
 
-Remove `place-items: center;` from the `body` section of `index.css`
-
-and add `width: 100%;` to TodoApp.css (Add to chapter6 branch )
-
 ### Update Footer
 
 Update `Footer.jsx` to return a `Typography` with absolute positioning at the bottom of the screen.
@@ -108,7 +105,7 @@ configured with the `elevation` property.  Update the outermost element of the `
 Use the `sx` property to add a large margin an set a minimum height and width. 
 
 ```js
-  <Paper sx={{marginX: 25, marginY: 5, minWidth: 500, minHeight: 500}} elevation={2}>
+  <Paper sx={{marginX: 15, marginY: 5, minWidth: 250, minHeight: 500}} elevation={2}>
 ```
 
 
@@ -118,29 +115,35 @@ Material provides a [`styled`](https://mui.com/system/styled/) function that can
 
 Create a new file named `src/views/ListTitle.jsx` that exports a  [styled](https://mui.com/system/styled/) component for the list name that uses a larger and fancier font with padding. 
 
-Add the following to `TodoListView.jsx` 
+Add the following to `ListTitle.jsx` 
 ```js
-const ListTItle = styled(Typography)({
+import { styled } from '@mui/system';
+import { Typography } from '@mui/material';
+
+const ListTitle = styled(Typography)({
     fontSize: 'x-large',
-    fontFamily: 'fantasy, cursive', 
+    fontFamily: 'fantasy, cursive',
     padding: 15,
-    margin: 0
+    margin: 0, 
+    textAlign: 'center'
 })
 
-export default ListTitle
+export default ListTitle;
 ```
 
-And replace the current tag used for the list name, an `<h2>`, with  `<ListName>`.
+Within `TodoListView` wrap both the list name and the "No List Selected" text in a  `<ListTitle>` tag.
 
 
 
 ### Modify `TodoListView` to Take a `listId` Property and Fetch the List From the Backend
 
-Until now the top level `TodoApp` component has passed a `TodoList` model to the `TodoListView`.  Continuing with this approach will add complexity when it comes time to adding and modifying list items, because the component that manages the state should also be the component that updates the state.  When it comes time to add and update items, if `TodoApp` continues to manages the list, then `TodoApp` will also need to pass down callbacks to add and update the list.  
+At the end of Chapter 4 the `TodoApp` component passed the object `{name: "Grocery List"}` to the `TodoListView`.  In Chapter 5, we introduced the data models and the API layer so now we can fetch data from the server and pass validated data to the component views.  
 
-Now, instead of passing a `TodoList` to `TodoListView`, pass the id of the list so that `TodoListView` can fetch the list from the backend and add or update items directly without resorting to callbacks. 
+When building a frontend application there is always a decision about where to manage data within the component hierarchy.  Generally wherever the data are stored, is where the functions to modify them also live.  (We will see an alternative approach in Chapter 8).  If the data are managed too high in the hierarchy, then it is cumbersome to pass both the data and the callbacks to modify the data down through multiple layers of components.  If the data are managed too low in the hierarchy, then there is share the data across related components.  
 
-Modify `TodoApp` to manage a `listId` variable using the `useState` hook, and pass that variable to `TodoListView`
+In this application, the `TodoListView` will accept the `id` of the list to display as a property, and then assume responsibility for fetching and storing the actual list.  
+
+Modify `TodoApp` to manage a `listId` variable using the `useState` hook, and pass that variable to `TodoListView` as below:
 
 ```js
 const TodoApp = () => {
@@ -170,7 +173,7 @@ const TodoListView = ({listId}) => {
     ...
 ```
 
-Now introduce a `useEffect` hook that will call a function `refresh()` that will fetch the list with `TodoApi.getList()` and call `setList()` with the result.  
+Now introduce a `useEffect` hook that will call an asynchronous function `refreshList()` that will fetch the list with `TodoApi.getList()` and call `setList()` with the result.  
 
 The `useEffect` takes two arguments, a function to execute, and a list of dependencies.  The function is called if any value in the list of dependencies changes.  
 
@@ -184,9 +187,11 @@ The following hook will update `list` whenever `listId` changes.
     }
 
     useEffect(() => {
-        refreshList();
-    }, [listId])
+        refreshList()
+    }, [listId]);
 ```
+
+The Application should now display the title for "Grocery List" which is one of the two lists already stored in the backend.  Check the http://localhost:3000/lists endpoint to confirm this, and change the default `listId` to 1 in `TodoApp` to confirm. 
 
 ### Create an input component for adding new items
 
@@ -195,7 +200,7 @@ for helper text, error text, and labels.
 
 We can additionally wrap the `TextField` in a Material [Tooltip](https://mui.com/material-ui/react-tooltip/) for extra polish.
 
-Add a `Tooltip` with a `TextField` for adding new items.  Use the `outlined`, `filled`, or `standard` variant based on your preference.
+Add a `Tooltip` with a `TextField` in `TodoListView` below the list name.  Use the `outlined`, `filled`, or `standard` variant based on your preference.
 
 Include an `autofocus` property so that the component takes the focus when the List renders. 
 
