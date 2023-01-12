@@ -359,12 +359,14 @@ Create a new file `src/views/TodoListSelectionView.jsx` that defines a `TodoList
 accept a function named `selectList` as a property that accepts a `TodoList`. When called, it notifies the parent component, `<TodoApp>`, that a list was selected so that the list can be displayed.
 
 ```js
-const TodoListSelectionView = ({listSelected}) => {
+const TodoListSelectionView = ({selectList}) => {
     return ();
 }
 ```
 
 ### Fetch the `lists` with `useEffect`
+
+Inside the `ListSelectionView` we will use an effect hook to fetch all the lists and store them in a state variable named `lists`.
 
 Add a state variable that contains the TodoLists to display with the `useState` hook.  Default it to an empty array. 
 
@@ -374,7 +376,7 @@ const [lists, setLists] = useState([]);
 
 When `TodoListSelectionView` loads, it must fetch the lists from the backend so that the user can choose a list.  
 
-Add a `useEffect` hook with a `refreshLists` function that calls `TodoApi.allLists()`, passing the return value to `setLists()`. Pass an empty array as the dependency, which is a pattern used in React to ensure the effect is called one time after the component is first rendered   
+Create a new function `refreshLists()` that calls `TodoApi.allLists()` and passes the return value to `setLists()`.  Then add a `useEffect` hook with to call the`refreshLists` function  Pass an empty array as the dependency. This is a pattern used in React to ensure the effect is called one time after the component is first rendered   
 
 ```js
 const refreshLists = async () => {
@@ -386,27 +388,35 @@ useEffect(() => {refreshlists()}, []);
 
 ### Render Each List as a Button in a Grid 
 
-Use a [Grid](https://mui.com/material-ui/react-grid2/) to render a 
-button for each list using the `ListTitle`.  
+At this point, we have fetched the lists from the backend, so now we need a way to display them.  For this we will use a [Grid](https://mui.com/material-ui/react-grid2/) to render a 
+button for each list using the `ListTitle`.  Import `Grid` from `@mui/material/Unstable_Grid2` and display a button for each list if `lists` is defined or a message if `lists` is undefined.
 
 ```js
-    return (<Grid spacing={3} sx={{margin: 7}} container>
-        {lists.map(l => 
-            <Grid key={l.id} xs={12} sm={6} md={4}> 
-                <Button variant="contained" sx={{width: '100%'}} onClick={() => selectList(l)}>
-                    <ListTitle>{l.name}</ListTitle>
-                </Button>
-            </Grid>
-        )}
-    </Grid>);
+return (
+    <Grid spacing={3} sx={{margin: 7}} container>
+    {lists && lists.map(l => 
+        <Grid key={l.id} xs={12} sm={6} md={4}>
+            <Button variant="contained" sx={{width: "100%"}} onClick={() => selectList(l)}>
+                <ListTitle>{l.name}</ListTitle>
+            </Button>
+        </Grid>    
+    )}
+
+    {!lists && 
+        <Grid xs={12}>
+            <Typography variant="h2">No Lists Found</Typography>
+        </Grid>
+    }
+    </Grid>
+);
 ```
 
 The outer most `<Grid>` element, which includes a `container` property, defines the existence of the grid.  Within that grid 
-container are grid cells.  Grid rows are divided into 12 units, and 
+container are grid cells.  the `lists` array is mapped into a button for each grid cell, and the contents of the button is the `ListTitle`.  A button click invokes a closure that calls  `listSelected` with the current list.
+
+Grid rows are divided into 12 units, and 
 each cell can occupy from 1 to 12 units.  Furthermore, it is possible 
 to specify a different number of units for different screen sizes.  In the example above, for an extra small (`xs`) screen the grid cell will occupy the entire row - all 12 units.  A small (`sm`) screen will contain two grid cells of 6 units each, and a medium (`md`) screen or larger will contain three grid cells of 4 units each. 
-
-Within the grid, the `lists` array is mapped into a button for each grid cell, and the contents of the button is the `ListTitle`.  A button click invokes a closure that calls  `listSelected` with the current list.
 
 ### Add Logic to `TodoApp` to render either `TodoListSelectionView or `TodoListView`
 
@@ -417,7 +427,7 @@ Modify the returned JSX of `TodoApp` to render the correct component based on wh
 Wrap `setListId` in a function and pass it to `TodoListSelectionView` as the `selectList` property so that a button click will render the TodoList.
 
 ```js
-{listId == null && <TodoListSelectionView  listSelected={(list) => setListId(list.id))} /> }
+{listId == null && <TodoListSelectionView  selectList={(list) => setListId(list.id))} /> }
 {listId != null &&  <TodoListView listId={listId}  /> }
 ```
 At this point the application will display a list when it is selected.  However, there is no mechanism to return to the `ListSelectionView` once a list is selected.
@@ -480,7 +490,7 @@ Add a new Grid Cell at the bottom of the `TodoListSelectionView` Grid.  Within t
 
 When the 'Add List' Button is clicked, set `addingList` to `true`. 
 
-Create a `handleKeyUp` function that checks the event `code` and either calls `setAddingList(false)` if the user typed `'Escape'` or `TodoApi.addList(ev.target.value)` if the user typed `'Enter'`.  Do not forget to call `setAddingList(false)` and `refresh()` after adding the list.  
+Create a `handleKeyUp` function that checks the event `code` and either calls `setAddingList(false)` if the user typed `'Escape'` or `TodoApi.addList(ev.target.value)` if the user typed `'Enter'`.  Do not forget to call `setAddingList(false)` and `refreshLists()` after adding the list.  
 
 The code below sets the grid cell to consume 12 grid units so that the button and text field always appear below the grid items.  It also uses a [Floating Action Button](https://mui.com/material-ui/react-floating-action-button/) with an `<AddIcon />` and a `<Tooltip>` for a nicer UX.  
 
