@@ -1,0 +1,22 @@
+{
+  "name": "todo-list-project",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "start": "wp --mode developement",
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "wp --mode production"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "webpack": "^5.75.0",
+    "webpack-nano": "^1.1.1",
+    "webpack-plugin-serve": "^1.6.0"
+  },
+  "dependencies": {
+    "mini-html-webpack-plugin": "^3.1.3"
+  }
+}
