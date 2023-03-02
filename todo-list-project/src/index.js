@@ -3,8 +3,14 @@ import { TodoListItemCreator } from "./TodoListItemCreator";
 
 const todoItems = [
     {complete: true, text: "This is complete"},
-    {complete:false, text: "This is NOT complete"}
+    {complete: false, text: "This is NOT complete"}
 ];
 
-document.body.appendChild(TodoListItemCreator());
+const addItem = (text) => {
+    const item = {complete: false, text}
+    todoItems.push(item);
+    console.log(todoItems);
+}
+
+document.body.appendChild(TodoListItemCreator(addItem));
 document.body.appendChild(TodoList(todoItems));
