@@ -1,6 +1,10 @@
-// import HelloSuperhero from "./HelloSuperhero";
-import { TodoListItem } from "./TodoListItem";
+import { TodoList } from "./TodoList";
+import { TodoListItemCreator } from "./TodoListItemCreator";
 
-// document.body.appendChild(HelloSuperhero("Superman"));
-document.body.appendChild(TodoListItem({complete: true, text: "This is complete"}));
-document.body.appendChild(TodoListItem({complete: false, text: "This is NOT complete"}));
+const todoItems = [
+    {complete: true, text: "This is complete"},
+    {complete:false, text: "This is NOT complete"}
+];
+
+document.body.appendChild(TodoListItemCreator());
+document.body.appendChild(TodoList(todoItems));
