@@ -14,7 +14,7 @@ module.exports = {
     plugins: [
         new MiniHtmlWebpackPlugin({
              context: {
-                title: "Superhero Greeter"
+                title: "Things Todo"
              }
         }),
         new WebpackPluginServe({
@@ -24,4 +24,12 @@ module.exports = {
             waitForBuild: true
         })
     ],
+    module: {
+        rules: [
+            {
+                test: /\.png$/,
+                type: 'asset/resource'
+            }
+        ]
+    }
 };
