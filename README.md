@@ -7,7 +7,7 @@ deploying a modern single page web application from the ground up.  The course f
 principles using modern frameworks as enablers rather than crutches.  
 
 Chapters 1 through 3 introduce core concepts of application frameworks but without the frameworks. Once the foundations are laid, chapters 4 through 8 
-rebuild the application in a Model-View Pattern with React using Material UI.  Typescript and Unit Testing are introduced as critical elements of writing 
+rebuild the application in a Model-View Pattern with React using Material UI. Typescript and Unit Testing are introduced as critical elements of writing 
 high quality code. 
 
 At the conclusion of this course, a developer will have an understanding and recognition not only of common patterns utilized when building react 
