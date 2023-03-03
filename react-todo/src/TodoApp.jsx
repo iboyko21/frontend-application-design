@@ -5,7 +5,7 @@ import TodoListView from "./views/TodoListView";
 const TodoApp = () => {
     return (
         <MainLayout>
-            <TodoListView />
+            <TodoListView list={{name: "Grocery List"}}/>
         </MainLayout>
     );
 }
