@@ -1,12 +1,13 @@
 import React from "react";
 import MainLayout from "./layout/MainLayout";
+import TodoListView from "./views/TodoListView";
 
 const TodoApp = () => {
     return (
         <MainLayout>
-            <h1>My Todo App</h1>
+            <TodoListView />
         </MainLayout>
-    )
+    );
 }
 
 export default TodoApp;
