@@ -1,0 +1,35 @@
+.TodoApp {
+    width: 80%;
+    margin: auto;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+.TodoListItemCreator {
+    padding: 0.5em;
+    margin: 0.5em 0;
+}
+
+.TodoListItemCreator:focus-visible {
+    outline-color: coral;
+}
+
+.TodoList {
+    border-top-style: inset;
+    border-left-style: inset;
+    border-right-style: inset;
+    border-bottom-style: inset;
+}
+
+.TodoListItem {
+    padding: 0.3em;
+    cursor: pointer;
+}
+
+.TodoListItem:hover {
+    background: #eee;
+}
+
+.TodoListItem img {
+    vertical-align: middle;
+    margin-right: 0.5em;
+}

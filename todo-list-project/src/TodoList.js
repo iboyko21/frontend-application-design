@@ -2,6 +2,7 @@ import { TodoListItem } from "./TodoListItem";
 
 export function TodoList(todoItems, updateItem) {
     const div = document.createElement('div');
+    div.className = "TodoList"
     for (let i = 0; i < todoItems.length; i++) {
         const item = todoItems[i];
         item.toggleComplete = () => {
@@ -11,6 +12,5 @@ export function TodoList(todoItems, updateItem) {
         div.appendChild(TodoListItem(item));
         // div.add(TodoListItem(item));
     }
-
     return div;
 }

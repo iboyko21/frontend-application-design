@@ -21,6 +21,7 @@ const updateItem = (i, item) => {
 
 function TodoApp() {
     const div = document.createElement('div');
+    div.className = "TodoApp";
     div.appendChild(TodoListItemCreator(addItem));
     div.appendChild(TodoList(todoItems,updateItem));
     return div;
