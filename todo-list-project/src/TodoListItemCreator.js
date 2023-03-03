@@ -1,5 +1,4 @@
 export function TodoListItemCreator(addItem) {
-
     // Create the Input Element
     const input = document.createElement('input');
 

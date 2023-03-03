@@ -10,15 +10,19 @@ const todoItems = [
 const addItem = (text) => {
     const item = {complete: false, text}
     todoItems.push(item);
-    console.log(todoItems);
+    // console.log(todoItems);
+    VDOM.refresh();
+}
+
+const updateItem = (i, item) => {
+    todoItems[i] = item;
     VDOM.refresh();
 }
 
 function TodoApp() {
     const div = document.createElement('div');
     div.appendChild(TodoListItemCreator(addItem));
-    div.appendChild(TodoList(todoItems));
-
+    div.appendChild(TodoList(todoItems,updateItem));
     return div;
 }
 
