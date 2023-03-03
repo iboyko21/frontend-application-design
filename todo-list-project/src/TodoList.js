@@ -10,7 +10,6 @@ export function TodoList(todoItems, updateItem) {
             updateItem(i, item);
         }
         div.appendChild(TodoListItem(item));
-        // div.add(TodoListItem(item));
     }
     return div;
 }

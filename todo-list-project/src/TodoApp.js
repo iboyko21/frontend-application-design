@@ -1,22 +1,20 @@
 import { TodoList } from "./TodoList";
 import { TodoListItemCreator } from "./TodoListItemCreator";
-import { VDOM } from "./VirtualDom";
+import { myUseState } from "./VirtualDom";
 
-const todoItems = [
-    {complete: true, text: "This is complete"},
-    {complete: false, text: "This is NOT complete"}
-];
+// Initialize the [todoItems, setTodoItems] pair 
+// with a call to myUseState passing an empty array as the initial value
+const [todoItems, setTodoItems] = myUseState([]);
 
 const addItem = (text) => {
     const item = {complete: false, text}
     todoItems.push(item);
-    // console.log(todoItems);
-    VDOM.refresh();
+    setTodoItems(todoItems);
 }
 
 const updateItem = (i, item) => {
     todoItems[i] = item;
-    VDOM.refresh();
+    setTodoItems(todoItems);
 }
 
 function TodoApp() {
